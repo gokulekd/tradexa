@@ -1,8 +1,16 @@
-// Card shown in the opportunities panel. One per detected setup.
+// Opportunity card — dark TradingView theme.
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tradexa/model/candle.dart';
+
+const _cardBg  = Color(0xFF1A2235);
+const _border  = Color(0xFF2A2E39);
+const _txtPri  = Color(0xFFD1D4DC);
+const _txtSec  = Color(0xFF787B86);
+const _chipBg  = Color(0xFF252D3D);
+const _bull    = Color(0xFF26A69A);
+const _bear    = Color(0xFFEF5350);
 
 class OpportunityCard extends StatelessWidget {
   final Opportunity opp;
@@ -24,129 +32,102 @@ class OpportunityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = NumberFormat.currency(
-      locale: 'en_IN',
-      symbol: '₹',
-      decimalDigits: 0,
-    );
-    final qty = opp.suggestedQty(riskBudget, maxCapital: maxCapital);
+    final fmt        = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+    final qty        = opp.suggestedQty(riskBudget, maxCapital: maxCapital);
     final constraint = opp.qtyConstraintLabel(riskBudget, maxCapital);
-    final capital = opp.capitalRequired(qty);
-    final maxLoss = opp.maxLoss(qty);
-    final maxGain = opp.maxGain(qty);
-
-    final dirColor = opp.direction == Direction.long
-        ? const Color(0xFF26A69A)
-        : const Color(0xFFEF5350);
+    final capital    = opp.capitalRequired(qty);
+    final maxLoss    = opp.maxLoss(qty);
+    final maxGain    = opp.maxGain(qty);
+    final dirColor   = opp.direction == Direction.long ? _bull : _bear;
 
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFFFF),
-          borderRadius: BorderRadius.circular(10),
+          color: _cardBg,
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? dirColor : const Color(0xFFE2E8F0),
-            width: isSelected ? 1.6 : 1.0,
+            color: isSelected ? dirColor : _border,
+            width: isSelected ? 1.4 : 0.8,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row: type badge, direction, R:R, confidence
-            Row(
-              children: [
-                _Badge(text: opp.type.shortLabel, color: dirColor),
-                const SizedBox(width: 8),
-                Text(
-                  opp.direction.label,
-                  style: TextStyle(
-                    color: dirColor,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                    letterSpacing: 0.5,
-                  ),
+            // Header: badge · direction · R:R · confidence
+            Row(children: [
+              _Badge(text: opp.type.shortLabel, color: dirColor),
+              const SizedBox(width: 8),
+              Text(
+                opp.direction.label,
+                style: TextStyle(
+                  color: dirColor,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  letterSpacing: 0.5,
                 ),
-                const Spacer(),
-                _MetricChip(
+              ),
+              const Spacer(),
+              _MetricChip(
                   label: 'R:R',
-                  value: '1:${opp.riskReward.toStringAsFixed(1)}',
-                ),
-                const SizedBox(width: 6),
-                _ConfidenceDot(value: opp.confidence),
-              ],
-            ),
+                  value: '1:${opp.riskReward.toStringAsFixed(1)}'),
+              const SizedBox(width: 6),
+              _ConfidenceDot(value: opp.confidence),
+            ]),
             const SizedBox(height: 8),
             Text(
               opp.reasoning,
               style: const TextStyle(
-                color: Color(0xFF64748B),
-                fontSize: 11.5,
-                height: 1.3,
+                  color: _txtSec, fontSize: 11.5, height: 1.3),
+            ),
+            const SizedBox(height: 10),
+
+            // Entry / SL / Target
+            Row(children: [
+              _PriceCell(label: 'ENTRY',
+                  value: '₹${opp.entry.toStringAsFixed(2)}',
+                  color: const Color(0xFFFFB300)),
+              _PriceCell(label: 'STOP',
+                  value: '₹${opp.stopLoss.toStringAsFixed(2)}',
+                  color: _bear),
+              _PriceCell(label: 'TARGET',
+                  value: '₹${opp.target.toStringAsFixed(2)}',
+                  color: _bull),
+            ]),
+            const SizedBox(height: 10),
+            const Divider(height: 1, color: _border),
+            const SizedBox(height: 10),
+
+            // Capital / Max Loss / Max Gain
+            Row(children: [
+              Expanded(
+                child: _MoneyCell(
+                  label: 'CAPITAL',
+                  value: fmt.format(capital),
+                  sub: qty > 0 ? '$qty sh · $constraint' : constraint,
+                  valueColor: _txtPri,
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-
-            // Entry / SL / Target row
-            Row(
-              children: [
-                _PriceCell(
-                    label: 'ENTRY',
-                    value: '₹${opp.entry.toStringAsFixed(2)}',
-                    color: const Color(0xFFD97706)),
-                _PriceCell(
-                    label: 'STOP',
-                    value: '₹${opp.stopLoss.toStringAsFixed(2)}',
-                    color: const Color(0xFFEF5350)),
-                _PriceCell(
-                    label: 'TARGET',
-                    value: '₹${opp.target.toStringAsFixed(2)}',
-                    color: const Color(0xFF16A34A)),
-              ],
-            ),
-            const SizedBox(height: 10),
-            const Divider(height: 1, color: Color(0xFFE2E8F0)),
-            const SizedBox(height: 10),
-
-            // Capital + P&L row
-            Row(
-              children: [
-                Expanded(
-                  child: _MoneyCell(
-                    label: 'CAPITAL NEEDED',
-                    value: fmt.format(capital),
-                    sub: qty > 0 ? '$qty shares · $constraint' : constraint,
-                    valueColor: const Color(0xFF1E293B),
-                  ),
+              Expanded(
+                child: _MoneyCell(
+                  label: 'MAX LOSS',
+                  value: '−${fmt.format(maxLoss)}',
+                  sub: 'if SL hit',
+                  valueColor: _bear,
                 ),
-                Expanded(
-                  child: _MoneyCell(
-                    label: 'MAX LOSS',
-                    value: '−${fmt.format(maxLoss)}',
-                    sub: 'if SL hit',
-                    valueColor: const Color(0xFFEF5350),
-                  ),
+              ),
+              Expanded(
+                child: _MoneyCell(
+                  label: 'MAX GAIN',
+                  value: '+${fmt.format(maxGain)}',
+                  sub: 'at target',
+                  valueColor: _bull,
                 ),
-                Expanded(
-                  child: _MoneyCell(
-                    label: 'MAX GAIN',
-                    value: '+${fmt.format(maxGain)}',
-                    sub: 'at target',
-                    valueColor: const Color(0xFF16A34A),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ]),
             const SizedBox(height: 10),
 
             // Take-trade button
@@ -157,29 +138,28 @@ class OpportunityCard extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: dirColor,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: const Color(0xFFE2E8F0),
-                  disabledForegroundColor: const Color(0xFF94A3B8),
+                  disabledBackgroundColor: _border,
+                  disabledForegroundColor: _txtSec,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(5),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 10),
+                  elevation: 0,
                 ),
                 icon: Icon(
                   opp.direction == Direction.long
                       ? Icons.trending_up
                       : Icons.trending_down,
-                  size: 16,
+                  size: 15,
                 ),
                 label: Text(
                   qty > 0
                       ? 'Take trade · ${opp.direction.label} $qty @ ₹${opp.entry.toStringAsFixed(2)}'
                       : (constraint == 'no capital'
                           ? 'Not enough demo cash'
-                          : 'Risk budget too small for 1 share'),
+                          : 'Risk budget too small'),
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                  ),
+                      fontWeight: FontWeight.w700, fontSize: 11.5),
                 ),
               ),
             ),
@@ -189,6 +169,8 @@ class OpportunityCard extends StatelessWidget {
     );
   }
 }
+
+// ── Sub-widgets ───────────────────────────────────────────────────────────────
 
 class _Badge extends StatelessWidget {
   final String text;
@@ -200,19 +182,16 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: color.withOpacity(0.4), width: 0.8),
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
-        ),
-      ),
+      child: Text(text,
+          style: TextStyle(
+              color: color,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5)),
     );
   }
 }
@@ -227,30 +206,18 @@ class _MetricChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: _chipBg,
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Text.rich(
+      child: Text.rich(TextSpan(children: [
         TextSpan(
-          children: [
-            TextSpan(
-              text: '$label ',
-              style: const TextStyle(
-                color: Color(0xFF64748B),
-                fontSize: 10,
-              ),
-            ),
-            TextSpan(
-              text: value,
-              style: const TextStyle(
-                color: Color(0xFF1E293B),
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
+            text: '$label ',
+            style: const TextStyle(color: _txtSec, fontSize: 10)),
+        TextSpan(
+            text: value,
+            style: const TextStyle(
+                color: _txtPri, fontSize: 10, fontWeight: FontWeight.w700)),
+      ])),
     );
   }
 }
@@ -262,21 +229,19 @@ class _ConfidenceDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = value >= 0.75
-        ? const Color(0xFF16A34A)
+        ? _bull
         : value >= 0.5
             ? const Color(0xFFFFB300)
-            : const Color(0xFFEF5350);
+            : _bear;
     return Tooltip(
       message: 'Confidence ${(value * 100).toStringAsFixed(0)}%',
       child: Container(
-        width: 10,
-        height: 10,
+        width: 9,
+        height: 9,
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(color: color.withOpacity(0.4), blurRadius: 4),
-          ],
+          boxShadow: [BoxShadow(color: color.withOpacity(0.4), blurRadius: 4)],
         ),
       ),
     );
@@ -293,29 +258,18 @@ class _PriceCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label,
             style: const TextStyle(
-              color: Color(0xFF94A3B8),
-              fontSize: 9,
-              letterSpacing: 0.8,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
+                color: _txtSec,
+                fontSize: 8.5,
+                letterSpacing: 0.7,
+                fontWeight: FontWeight.w600)),
+        const SizedBox(height: 2),
+        Text(value,
             style: TextStyle(
-              color: color,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
+                color: color, fontSize: 12.5, fontWeight: FontWeight.w700)),
+      ]),
     );
   }
 }
@@ -334,36 +288,19 @@ class _MoneyCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label,
           style: const TextStyle(
-            color: Color(0xFF94A3B8),
-            fontSize: 9,
-            letterSpacing: 0.8,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
+              color: _txtSec,
+              fontSize: 8.5,
+              letterSpacing: 0.7,
+              fontWeight: FontWeight.w600)),
+      const SizedBox(height: 2),
+      Text(value,
           style: TextStyle(
-            color: valueColor,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 1),
-        Text(
-          sub,
-          style: const TextStyle(
-            color: Color(0xFF94A3B8),
-            fontSize: 9.5,
-          ),
-        ),
-      ],
-    );
+              color: valueColor, fontSize: 12, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 1),
+      Text(sub, style: const TextStyle(color: _txtSec, fontSize: 9)),
+    ]);
   }
 }
