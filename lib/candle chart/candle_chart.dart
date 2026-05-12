@@ -42,7 +42,6 @@ class _CandleChartState extends State<CandleChart> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    // Jump to the right edge (most recent candles) after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
@@ -64,7 +63,6 @@ class _CandleChartState extends State<CandleChart> {
       if (c.low < lo) lo = c.low;
       if (c.high > hi) hi = c.high;
     }
-    // Expand range to include opportunity zones so SLs and targets are visible
     for (final op in widget.opportunities) {
       lo = lo < op.stopLoss ? lo : op.stopLoss;
       lo = lo < op.zoneBottom ? lo : op.zoneBottom;
@@ -132,8 +130,6 @@ class _CandleChartState extends State<CandleChart> {
     final tappedX = local.dx;
     final candleIndex = (tappedX / slotWidth).floor();
 
-    // Find an opportunity whose zone+x-range contains the tap.
-    // Zones extend from anchor to the rightmost candle.
     int? bestIdx;
     double bestScore = -1;
     for (int i = 0; i < widget.opportunities.length; i++) {
@@ -177,16 +173,22 @@ class _ChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final h = size.height;
 
-    // Grid lines (subtle horizontal)
+    // Chart background
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = const Color(0xFFFFFFFF),
+    );
+
+    // Grid lines
     final gridPaint = Paint()
-      ..color = const Color(0xFF1F2630)
+      ..color = const Color(0xFFEEF2F7)
       ..strokeWidth = 0.5;
     for (int i = 1; i < 5; i++) {
       final y = h * i / 5;
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
     }
 
-    // 1) Draw non-selected zones first (so selected appears on top)
+    // 1) Draw non-selected zones first
     for (int i = 0; i < opportunities.length; i++) {
       if (i == selectedIndex) continue;
       _drawZone(canvas, size, opportunities[i], false);
@@ -218,7 +220,7 @@ class _ChartPainter extends CustomPainter {
       canvas.drawRect(rect, Paint()..color = color);
     }
 
-    // 3) Selected zone on top with stronger styling
+    // 3) Selected zone on top
     if (selectedIndex != null &&
         selectedIndex! >= 0 &&
         selectedIndex! < opportunities.length) {
@@ -241,13 +243,12 @@ class _ChartPainter extends CustomPainter {
     switch (op.type) {
       case SetupType.bullishOB:
       case SetupType.bearishOB:
-        // Filled translucent rectangle, solid border
         final fill = Paint()
-          ..color = baseColor.withOpacity(selected ? 0.32 : 0.14);
+          ..color = baseColor.withOpacity(selected ? 0.22 : 0.08);
         canvas.drawRect(Rect.fromLTRB(left, yTop, right, yBot), fill);
 
         final border = Paint()
-          ..color = baseColor.withOpacity(selected ? 1.0 : 0.55)
+          ..color = baseColor.withOpacity(selected ? 1.0 : 0.45)
           ..style = PaintingStyle.stroke
           ..strokeWidth = selected ? 1.6 : 1.0;
         canvas.drawRect(Rect.fromLTRB(left, yTop, right, yBot), border);
@@ -257,14 +258,13 @@ class _ChartPainter extends CustomPainter {
 
       case SetupType.bullishFVG:
       case SetupType.bearishFVG:
-        // Dashed border rectangle (FVGs are more transient than OBs)
         final fill = Paint()
-          ..color = baseColor.withOpacity(selected ? 0.22 : 0.08);
+          ..color = baseColor.withOpacity(selected ? 0.16 : 0.06);
         canvas.drawRect(Rect.fromLTRB(left, yTop, right, yBot), fill);
         _drawDashedRect(
           canvas,
           Rect.fromLTRB(left, yTop, right, yBot),
-          baseColor.withOpacity(selected ? 1.0 : 0.5),
+          baseColor.withOpacity(selected ? 1.0 : 0.4),
           selected ? 1.4 : 0.9,
         );
         _drawLabel(canvas, left, yTop, op.type.shortLabel, baseColor, selected);
@@ -272,15 +272,13 @@ class _ChartPainter extends CustomPainter {
 
       case SetupType.liquiditySweepHigh:
       case SetupType.liquiditySweepLow:
-        // Dashed horizontal line at the swept level + small marker
         final lineY = op.type == SetupType.liquiditySweepHigh
             ? _y(op.zoneBottom, h)
             : _y(op.zoneTop, h);
-        final color = baseColor.withOpacity(selected ? 1.0 : 0.7);
+        final color = baseColor.withOpacity(selected ? 1.0 : 0.65);
         _drawDashedLine(canvas, Offset(left - 30, lineY), Offset(right, lineY),
             color, selected ? 2.0 : 1.2);
 
-        // Small "x" marker at the anchor candle showing the sweep
         final mp = Paint()..color = color;
         canvas.drawCircle(Offset(_xCenter(op.anchorIndex), lineY), 3.5, mp);
 
@@ -289,13 +287,12 @@ class _ChartPainter extends CustomPainter {
         break;
     }
 
-    // Entry / SL / Target lines (only on selected to avoid clutter)
     if (selected) {
-      _drawLevelLine(canvas, size, op.entry, const Color(0xFFFFD54F), 'Entry',
+      _drawLevelLine(canvas, size, op.entry, const Color(0xFFFFB300), 'Entry',
           op.anchorIndex);
       _drawLevelLine(canvas, size, op.stopLoss, const Color(0xFFEF5350), 'SL',
           op.anchorIndex);
-      _drawLevelLine(canvas, size, op.target, const Color(0xFF66BB6A), 'TGT',
+      _drawLevelLine(canvas, size, op.target, const Color(0xFF26A69A), 'TGT',
           op.anchorIndex);
     }
   }
@@ -314,7 +311,7 @@ class _ChartPainter extends CustomPainter {
           color: color,
           fontSize: 9,
           fontWeight: FontWeight.w600,
-          backgroundColor: const Color(0xFF0E1116),
+          backgroundColor: const Color(0xFFFFFFFF).withOpacity(0.85),
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -401,10 +398,10 @@ class _YAxisPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Background to match scaffold so the axis "covers" any candle that scrolled under
+    // Background matches chart background
     canvas.drawRect(
       Offset.zero & size,
-      Paint()..color = const Color(0xFF0E1116),
+      Paint()..color = const Color(0xFFFFFFFF),
     );
 
     // Left border
@@ -412,7 +409,7 @@ class _YAxisPainter extends CustomPainter {
       const Offset(0, 0),
       Offset(0, size.height),
       Paint()
-        ..color = const Color(0xFF2A2F38)
+        ..color = const Color(0xFFE2E8F0)
         ..strokeWidth = 0.5,
     );
 
@@ -425,7 +422,7 @@ class _YAxisPainter extends CustomPainter {
         text: TextSpan(
           text: '₹${price.toStringAsFixed(1)}',
           style: const TextStyle(
-            color: Color(0xFF8B95A1),
+            color: Color(0xFF64748B),
             fontSize: 10,
           ),
         ),
@@ -448,7 +445,7 @@ class _YAxisPainter extends CustomPainter {
         text: TextSpan(
           text: ' ₹${latestClose!.toStringAsFixed(1)}',
           style: const TextStyle(
-            color: Colors.black,
+            color: Colors.white,
             fontSize: 10,
             fontWeight: FontWeight.w700,
             backgroundColor: Color(0xFFFFB300),

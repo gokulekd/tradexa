@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:tradexa/chart%20screen/chart_screen.dart';
 import 'package:tradexa/portfolio/portfolio.dart';
+import 'package:tradexa/splash/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,32 +21,32 @@ class KiteInsightsApp extends StatelessWidget {
         title: 'Kite Insights',
         debugShowCheckedModeBanner: false,
         theme: _buildTheme(),
-        home: const ChartScreen(),
+        home: const SplashScreen(),
       ),
     );
   }
 
   ThemeData _buildTheme() {
     return ThemeData(
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       useMaterial3: true,
-      scaffoldBackgroundColor: const Color(0xFF0E1116),
-      colorScheme: const ColorScheme.dark(
+      scaffoldBackgroundColor: const Color(0xFFF5F7FA),
+      colorScheme: const ColorScheme.light(
         primary: Color(0xFFFFB300),
         secondary: Color(0xFF26A69A),
-        surface: Color(0xFF161B22),
-        background: Color(0xFF0E1116),
+        surface: Color(0xFFFFFFFF),
       ),
-      cardColor: const Color(0xFF161B22),
-      dividerColor: const Color(0xFF2A2F38),
+      cardColor: const Color(0xFFFFFFFF),
+      dividerColor: const Color(0xFFE2E8F0),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF0E1116),
+        backgroundColor: Color(0xFFFFFFFF),
+        foregroundColor: Color(0xFF1E293B),
         elevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
       textTheme: const TextTheme().apply(
-        bodyColor: const Color(0xFFE6E9EE),
-        displayColor: const Color(0xFFE6E9EE),
+        bodyColor: const Color(0xFF1E293B),
+        displayColor: const Color(0xFF1E293B),
       ),
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,

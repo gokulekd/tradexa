@@ -1,102 +1,111 @@
-// The single screen of v1.
-// Layout:
-//   AppBar (symbol + reset)
-//   Demo balance bar
-//   FII/DII flow strip
-//   Candle chart (with overlays)
-//   Open positions section (only shown if positions exist)
-//   Opportunities list (scrollable)
+// Chart screen — receives pre-loaded candles + opportunities from HomeScreen.
+// A StreamBuilder subscribes to ltpStream for live price updates (30-s poll).
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:tradexa/candle%20chart/candle_chart.dart';
-import 'package:tradexa/data/mock_data.dart';
-import 'package:tradexa/detector/detector.dart';
+import 'package:tradexa/data/live_data.dart';
 import 'package:tradexa/model/candle.dart';
 import 'package:tradexa/oppertunity%20card/oppertunity_card.dart';
 import 'package:tradexa/portfolio/portfolio.dart';
 
 class ChartScreen extends StatefulWidget {
-  const ChartScreen({super.key});
+  final List<Candle> candles;
+  final List<FlowData> flow;
+  final List<Opportunity> opportunities;
+  final String symbol;
+  final bool isLive;
+
+  const ChartScreen({
+    super.key,
+    required this.candles,
+    required this.flow,
+    required this.opportunities,
+    required this.symbol,
+    required this.isLive,
+  });
 
   @override
   State<ChartScreen> createState() => _ChartScreenState();
 }
 
 class _ChartScreenState extends State<ChartScreen> {
-  late final List<Candle> _candles;
-  late final List<FlowData> _flow;
   late final List<Opportunity> _opportunities;
+  late Stream<double> _ltpStream;
   int? _selectedIdx;
 
-  /// Risk budget per trade. Caps qty by the 1% rule: never lose more than this
-  /// if the stop is hit. 1% of starting balance = ₹5,000.
   double get _riskBudget => Portfolio.startingBalance * 0.01;
-
-  /// Max capital deployable per trade. Caps qty so a single high-priced stock
-  /// (like RELIANCE at ₹2900) can't consume the whole demo balance. 25% of
-  /// starting balance = ₹1,25,000 → allows up to 4 concurrent positions.
   double get _maxCapitalPerTrade => Portfolio.startingBalance * 0.25;
 
   @override
   void initState() {
     super.initState();
-    _candles = getCandles(mockSymbol);
-    _flow = getFlowHistory();
-    _opportunities = Detector().detectAll(_candles)
-      // Sort by anchor index descending (most recent setups first)
+    _opportunities = List.from(widget.opportunities)
       ..sort((a, b) => b.anchorIndex.compareTo(a.anchorIndex));
+    _ltpStream = ltpStream(widget.symbol);
   }
-
-  double get _lastClose => _candles.last.close;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(),
-      body: Column(
-        children: [
-          _DemoBalanceBar(currentPrice: _lastClose),
-          _FlowStrip(flow: _flow),
-          const _ChartHeader(),
-          CandleChart(
-            candles: _candles,
-            opportunities: _opportunities,
-            selectedOpportunityIndex: _selectedIdx,
-            onOpportunityTap: (idx) {
-              setState(() {
-                _selectedIdx = (idx == _selectedIdx) ? null : idx;
-              });
-            },
+    return StreamBuilder<double>(
+      stream: _ltpStream,
+      initialData: widget.candles.isNotEmpty ? widget.candles.last.close : 0,
+      builder: (context, snap) {
+        final currentPrice = snap.data ?? widget.candles.last.close;
+        return Scaffold(
+          backgroundColor: const Color(0xFFF5F7FA),
+          appBar: _buildAppBar(currentPrice),
+          body: Column(
+            children: [
+              _DemoBalanceBar(currentPrice: currentPrice),
+              _FlowStrip(
+                  flow: widget.flow, isLive: widget.isLive),
+              _ChartHeader(isLive: widget.isLive),
+              CandleChart(
+                candles: widget.candles,
+                opportunities: _opportunities,
+                selectedOpportunityIndex: _selectedIdx,
+                onOpportunityTap: (idx) {
+                  setState(() {
+                    _selectedIdx = (idx == _selectedIdx) ? null : idx;
+                  });
+                },
+              ),
+              _OpenPositionsPanel(currentPrice: currentPrice),
+              Expanded(
+                child: _buildOpportunityList(currentPrice),
+              ),
+            ],
           ),
-          _OpenPositionsPanel(currentPrice: _lastClose),
-          Expanded(
-            child: _buildOpportunityList(),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  AppBar _buildAppBar() {
+  AppBar _buildAppBar(double currentPrice) {
     return AppBar(
-      backgroundColor: const Color(0xFF0E1116),
+      backgroundColor: const Color(0xFFFFFFFF),
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(height: 1, color: const Color(0xFFE2E8F0)),
+      ),
       titleSpacing: 12,
       title: Row(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFB300).withOpacity(0.18),
+              color: const Color(0xFFFFB300).withOpacity(0.12),
               borderRadius: BorderRadius.circular(4),
               border: Border.all(
-                  color: const Color(0xFFFFB300).withOpacity(0.6), width: 0.8),
+                  color: const Color(0xFFFFB300).withOpacity(0.5), width: 0.8),
             ),
-            child: const Text(
-              'RELIANCE · NSE',
-              style: TextStyle(
+            child: Text(
+              '${widget.symbol} · NSE',
+              style: const TextStyle(
                 color: Color(0xFFFFB300),
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -106,20 +115,22 @@ class _ChartScreenState extends State<ChartScreen> {
           ),
           const SizedBox(width: 10),
           Text(
-            '₹${_lastClose.toStringAsFixed(2)}',
+            '₹${currentPrice.toStringAsFixed(2)}',
             style: const TextStyle(
-              color: Colors.white,
+              color: Color(0xFF1E293B),
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(width: 6),
           Builder(builder: (context) {
-            final prev = _candles[_candles.length - 2].close;
-            final delta = _lastClose - prev;
+            if (widget.candles.length < 2) return const SizedBox.shrink();
+            final prev = widget.candles[widget.candles.length - 2].close;
+            final delta = currentPrice - prev;
             final pct = (delta / prev) * 100;
-            final color =
-                delta >= 0 ? const Color(0xFF26A69A) : const Color(0xFFEF5350);
+            final color = delta >= 0
+                ? const Color(0xFF26A69A)
+                : const Color(0xFFEF5350);
             return Text(
               '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(2)} '
               '(${delta >= 0 ? '+' : ''}${pct.toStringAsFixed(2)}%)',
@@ -133,9 +144,16 @@ class _ChartScreenState extends State<ChartScreen> {
         ],
       ),
       actions: [
+        if (widget.isLive)
+          const Padding(
+            padding: EdgeInsets.only(right: 4),
+            child: Center(
+              child: _LiveDot(),
+            ),
+          ),
         IconButton(
           tooltip: 'Reset demo balance',
-          icon: const Icon(Icons.refresh, size: 20),
+          icon: const Icon(Icons.refresh, size: 20, color: Color(0xFF64748B)),
           onPressed: () {
             context.read<Portfolio>().reset();
             setState(() => _selectedIdx = null);
@@ -145,14 +163,14 @@ class _ChartScreenState extends State<ChartScreen> {
     );
   }
 
-  Widget _buildOpportunityList() {
+  Widget _buildOpportunityList(double currentPrice) {
     if (_opportunities.isEmpty) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(24),
           child: Text(
             'No institutional setups detected in current window.',
-            style: TextStyle(color: Color(0xFF8B95A1)),
+            style: TextStyle(color: Color(0xFF94A3B8)),
           ),
         ),
       );
@@ -164,7 +182,8 @@ class _ChartScreenState extends State<ChartScreen> {
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
           child: Row(
             children: [
-              const Icon(Icons.auto_graph, size: 16, color: Color(0xFFFFB300)),
+              const Icon(Icons.auto_graph,
+                  size: 16, color: Color(0xFFFFB300)),
               const SizedBox(width: 6),
               const Text(
                 'OPPORTUNITIES',
@@ -177,15 +196,16 @@ class _ChartScreenState extends State<ChartScreen> {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1F2630),
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   '${_opportunities.length} found',
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: Color(0xFF1E293B),
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),
@@ -193,9 +213,10 @@ class _ChartScreenState extends State<ChartScreen> {
               ),
               const Spacer(),
               Text(
-                'Risk ₹${_riskBudget.toStringAsFixed(0)} · Capital ₹${_maxCapitalPerTrade.toStringAsFixed(0)} / trade',
+                'Risk ₹${_riskBudget.toStringAsFixed(0)} · '
+                'Cap ₹${_maxCapitalPerTrade.toStringAsFixed(0)}/trade',
                 style: const TextStyle(
-                  color: Color(0xFF8B95A1),
+                  color: Color(0xFF94A3B8),
                   fontSize: 10.5,
                 ),
               ),
@@ -208,7 +229,6 @@ class _ChartScreenState extends State<ChartScreen> {
             itemCount: _opportunities.length,
             itemBuilder: (context, idx) {
               final op = _opportunities[idx];
-              // Cap per-trade capital by remaining demo cash too
               final p = context.watch<Portfolio>();
               final perTradeCap =
                   p.cash < _maxCapitalPerTrade ? p.cash : _maxCapitalPerTrade;
@@ -226,11 +246,12 @@ class _ChartScreenState extends State<ChartScreen> {
                   final err = context.read<Portfolio>().takeTrade(
                         opp: op,
                         qty: qty,
-                        symbol: mockSymbol,
+                        symbol: widget.symbol,
                       );
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text(err ??
-                        'Trade taken · ${op.direction.label} $qty @ ₹${op.entry.toStringAsFixed(2)}'),
+                        'Trade taken · ${op.direction.label} $qty @ '
+                            '₹${op.entry.toStringAsFixed(2)}'),
                     backgroundColor: err == null
                         ? const Color(0xFF26A69A)
                         : const Color(0xFFEF5350),
@@ -246,9 +267,58 @@ class _ChartScreenState extends State<ChartScreen> {
   }
 }
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Live dot indicator
+// ---------------------------------------------------------------------------
+
+class _LiveDot extends StatefulWidget {
+  const _LiveDot();
+  @override
+  State<_LiveDot> createState() => _LiveDotState();
+}
+
+class _LiveDotState extends State<_LiveDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) => Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Color.lerp(
+            const Color(0xFF26A69A),
+            const Color(0xFF26A69A).withOpacity(0.3),
+            _ctrl.value,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Demo balance bar
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 class _DemoBalanceBar extends StatelessWidget {
   final double currentPrice;
@@ -274,20 +344,20 @@ class _DemoBalanceBar extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: const BoxDecoration(
-            color: Color(0xFF161B22),
+            color: Color(0xFFFFFFFF),
             border: Border(
-              bottom: BorderSide(color: Color(0xFF2A2F38), width: 0.5),
+              bottom: BorderSide(color: Color(0xFFE2E8F0), width: 0.5),
             ),
           ),
           child: Row(
             children: [
               const Icon(Icons.account_balance_wallet,
-                  size: 16, color: Color(0xFF8B95A1)),
+                  size: 16, color: Color(0xFF64748B)),
               const SizedBox(width: 6),
               const Text(
                 'DEMO',
                 style: TextStyle(
-                  color: Color(0xFF8B95A1),
+                  color: Color(0xFF64748B),
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
@@ -299,12 +369,12 @@ class _DemoBalanceBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text('Equity',
-                      style:
-                          TextStyle(color: Color(0xFF8B95A1), fontSize: 9.5)),
+                      style: TextStyle(
+                          color: Color(0xFF64748B), fontSize: 9.5)),
                   Text(
                     fmt.format(equity),
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFF1E293B),
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
@@ -317,12 +387,12 @@ class _DemoBalanceBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text('Cash',
-                      style:
-                          TextStyle(color: Color(0xFF8B95A1), fontSize: 9.5)),
+                      style: TextStyle(
+                          color: Color(0xFF64748B), fontSize: 9.5)),
                   Text(
                     fmt.format(p.cash),
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFF1E293B),
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
@@ -346,10 +416,7 @@ class _DemoBalanceBar extends StatelessWidget {
                     unrealized.abs() < 0.5
                         ? 'flat'
                         : 'unrealized ${unrealized >= 0 ? '+' : ''}${fmt.format(unrealized)}',
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 10,
-                    ),
+                    style: TextStyle(color: color, fontSize: 10),
                   ),
                 ],
               ),
@@ -361,16 +428,18 @@ class _DemoBalanceBar extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // FII/DII flow strip
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 class _FlowStrip extends StatelessWidget {
   final List<FlowData> flow;
-  const _FlowStrip({required this.flow});
+  final bool isLive;
+  const _FlowStrip({required this.flow, required this.isLive});
 
   @override
   Widget build(BuildContext context) {
+    if (flow.isEmpty) return const SizedBox.shrink();
     final last = flow.last;
     final regime = last.regime;
     Color regimeColor;
@@ -385,15 +454,15 @@ class _FlowStrip extends StatelessWidget {
         regimeColor = const Color(0xFFFFB300);
         break;
       default:
-        regimeColor = const Color(0xFF8B95A1);
+        regimeColor = const Color(0xFF64748B);
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: const BoxDecoration(
-        color: Color(0xFF0E1116),
+        color: Color(0xFFF5F7FA),
         border: Border(
-          bottom: BorderSide(color: Color(0xFF2A2F38), width: 0.5),
+          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 0.5),
         ),
       ),
       child: Row(
@@ -401,9 +470,9 @@ class _FlowStrip extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
             decoration: BoxDecoration(
-              color: regimeColor.withOpacity(0.18),
+              color: regimeColor.withOpacity(0.10),
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: regimeColor.withOpacity(0.6)),
+              border: Border.all(color: regimeColor.withOpacity(0.4)),
             ),
             child: Text(
               regime.toUpperCase(),
@@ -438,20 +507,22 @@ class _FlowStrip extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Text(
-            'FII F&O ${_fmtCr(last.fiiFnoIndexNetLong)}',
-            style: TextStyle(
-              color: last.fiiFnoIndexNetLong >= 0
-                  ? const Color(0xFF26A69A)
-                  : const Color(0xFFEF5350),
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
+          Flexible(
+            child: Text(
+              'FII F&O ${_fmtCr(last.fiiFnoIndexNetLong)}',
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: last.fiiFnoIndexNetLong >= 0
+                    ? const Color(0xFF26A69A)
+                    : const Color(0xFFEF5350),
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-          const Spacer(),
-          // mini sparkline of fiiCash over last 10 sessions
+          const SizedBox(width: 8),
           SizedBox(
-            width: 80,
+            width: 64,
             height: 20,
             child: CustomPaint(
               painter: _Sparkline(
@@ -459,6 +530,17 @@ class _FlowStrip extends StatelessWidget {
                   color: regimeColor),
             ),
           ),
+          if (isLive) ...[
+            const SizedBox(width: 6),
+            const Text(
+              'NSE',
+              style: TextStyle(
+                color: Color(0xFF26A69A),
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -507,23 +589,27 @@ class _Sparkline extends CustomPainter {
   bool shouldRepaint(covariant _Sparkline old) => old.values != values;
 }
 
-// -----------------------------------------------------------------------------
-// Chart header (subtitle row)
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Chart header
+// ---------------------------------------------------------------------------
 
 class _ChartHeader extends StatelessWidget {
-  const _ChartHeader();
+  final bool isLive;
+  const _ChartHeader({required this.isLive});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
+      color: const Color(0xFFF5F7FA),
       child: Row(
         children: [
-          const Text(
-            '15m  ·  Mock',
+          Text(
+            isLive ? '15m  ·  Live' : '15m  ·  Mock',
             style: TextStyle(
-              color: Color(0xFF8B95A1),
+              color: isLive
+                  ? const Color(0xFF26A69A)
+                  : const Color(0xFF64748B),
               fontSize: 10.5,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
@@ -563,7 +649,7 @@ class _LegendDot extends StatelessWidget {
           width: 10,
           height: 10,
           decoration: BoxDecoration(
-            color: color.withOpacity(dashed ? 0.0 : 0.4),
+            color: color.withOpacity(dashed ? 0.0 : 0.3),
             border: Border.all(color: color, width: 1),
             borderRadius: BorderRadius.circular(2),
           ),
@@ -571,16 +657,16 @@ class _LegendDot extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(color: Color(0xFFAFB7C2), fontSize: 10),
+          style: const TextStyle(color: Color(0xFF64748B), fontSize: 10),
         ),
       ],
     );
   }
 }
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // Open positions panel
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 class _OpenPositionsPanel extends StatelessWidget {
   final double currentPrice;
@@ -599,10 +685,10 @@ class _OpenPositionsPanel extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
           decoration: const BoxDecoration(
-            color: Color(0xFF11161D),
+            color: Color(0xFFF8FAFC),
             border: Border(
-              top: BorderSide(color: Color(0xFF2A2F38), width: 0.5),
-              bottom: BorderSide(color: Color(0xFF2A2F38), width: 0.5),
+              top: BorderSide(color: Color(0xFFE2E8F0), width: 0.5),
+              bottom: BorderSide(color: Color(0xFFE2E8F0), width: 0.5),
             ),
           ),
           child: Column(
@@ -612,7 +698,8 @@ class _OpenPositionsPanel extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 2, bottom: 6),
                 child: Row(
                   children: [
-                    const Icon(Icons.bolt, size: 14, color: Color(0xFF26A69A)),
+                    const Icon(Icons.bolt,
+                        size: 14, color: Color(0xFF26A69A)),
                     const SizedBox(width: 4),
                     Text(
                       'OPEN POSITIONS (${p.openPositions.length})',
@@ -637,14 +724,14 @@ class _OpenPositionsPanel extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF161B22),
+                    color: const Color(0xFFFFFFFF),
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
                       color: status == 'targetHit'
                           ? const Color(0xFF66BB6A).withOpacity(0.5)
                           : status == 'stoppedOut'
                               ? const Color(0xFFEF5350).withOpacity(0.5)
-                              : const Color(0xFF2A2F38),
+                              : const Color(0xFFE2E8F0),
                     ),
                   ),
                   child: Row(
@@ -653,9 +740,10 @@ class _OpenPositionsPanel extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 5, vertical: 2),
                         decoration: BoxDecoration(
-                          color: color.withOpacity(0.18),
+                          color: color.withOpacity(0.10),
                           borderRadius: BorderRadius.circular(3),
-                          border: Border.all(color: color.withOpacity(0.55)),
+                          border:
+                              Border.all(color: color.withOpacity(0.4)),
                         ),
                         child: Text(
                           pos.direction.label,
@@ -670,7 +758,7 @@ class _OpenPositionsPanel extends StatelessWidget {
                       Text(
                         '${pos.qty} @ ₹${pos.entry.toStringAsFixed(2)}',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: Color(0xFF1E293B),
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -679,7 +767,7 @@ class _OpenPositionsPanel extends StatelessWidget {
                       Text(
                         pos.setupType.shortLabel,
                         style: const TextStyle(
-                          color: Color(0xFF8B95A1),
+                          color: Color(0xFF64748B),
                           fontSize: 9.5,
                         ),
                       ),
@@ -703,13 +791,13 @@ class _OpenPositionsPanel extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1F2630),
+                            color: const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text(
                             'Close',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Color(0xFF1E293B),
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
@@ -719,7 +807,7 @@ class _OpenPositionsPanel extends StatelessWidget {
                     ],
                   ),
                 );
-              }).toList(),
+              }),
             ],
           ),
         );
