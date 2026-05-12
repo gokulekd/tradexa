@@ -15,14 +15,67 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+// All stocks listed in the FII/DII Playbook — section 4 "Most-traded stocks".
+class _Stock {
+  final String symbol;
+  final String name;
+  final String sector;
+  const _Stock(this.symbol, this.name, this.sector);
+}
+
 class _HomeScreenState extends State<HomeScreen> {
   static const _symbol = 'RELIANCE';
+
+  static const _fiiStocks = [
+    _Stock('RELIANCE',   'Reliance Industries',    'Energy'),
+    _Stock('HDFCBANK',   'HDFC Bank',              'Financials'),
+    _Stock('ICICIBANK',  'ICICI Bank',             'Financials'),
+    _Stock('AXISBANK',   'Axis Bank',              'Financials'),
+    _Stock('SBIN',       'State Bank of India',    'Financials'),
+    _Stock('KOTAKBANK',  'Kotak Mahindra Bank',    'Financials'),
+    _Stock('INFY',       'Infosys',                'IT'),
+    _Stock('TCS',        'TCS',                    'IT'),
+    _Stock('HCLTECH',    'HCL Technologies',       'IT'),
+    _Stock('WIPRO',      'Wipro',                  'IT'),
+    _Stock('BHARTIARTL', 'Bharti Airtel',          'Telecom'),
+    _Stock('ITC',        'ITC',                    'Staples'),
+    _Stock('HINDUNILVR', 'Hindustan Unilever',     'Staples'),
+    _Stock('LT',         'Larsen & Toubro',        'Cap Goods'),
+    _Stock('BAJFINANCE', 'Bajaj Finance',          'NBFC'),
+    _Stock('BAJAJFINSV', 'Bajaj Finserv',          'NBFC'),
+    _Stock('MARUTI',     'Maruti Suzuki',          'Auto'),
+    _Stock('TATAMOTORS', 'Tata Motors',            'Auto'),
+    _Stock('M&M',        'Mahindra & Mahindra',    'Auto'),
+    _Stock('ASIANPAINT', 'Asian Paints',           'Discretionary'),
+    _Stock('ULTRACEMCO', 'UltraTech Cement',       'Materials'),
+    _Stock('SUNPHARMA',  'Sun Pharma',             'Pharma'),
+    _Stock('DRREDDY',    "Dr Reddy's",             'Pharma'),
+    _Stock('CIPLA',      'Cipla',                  'Pharma'),
+  ];
+
+  static Color _sectorColor(String sector) {
+    switch (sector) {
+      case 'Energy':       return const Color(0xFFFFB300);
+      case 'Financials':   return const Color(0xFF1565C0);
+      case 'IT':           return const Color(0xFF6A1B9A);
+      case 'Telecom':      return const Color(0xFF00838F);
+      case 'Staples':      return const Color(0xFF2E7D32);
+      case 'Cap Goods':    return const Color(0xFF283593);
+      case 'NBFC':         return const Color(0xFF00695C);
+      case 'Auto':         return const Color(0xFFAD1457);
+      case 'Discretionary':return const Color(0xFFE65100);
+      case 'Materials':    return const Color(0xFF5D4037);
+      case 'Pharma':       return const Color(0xFF0277BD);
+      default:             return const Color(0xFF64748B);
+    }
+  }
 
   List<Candle>? _candles;
   List<FlowData>? _flow;
   List<Opportunity>? _opportunities;
   bool _isLive = false;
   String? _error;
+  String? _loadingSymbol;
 
   final _fmt = NumberFormat.currency(
     locale: 'en_IN',
@@ -61,6 +114,38 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
       setState(() => _error = e.toString());
     }
+  }
+
+  Future<void> _openChartFor(String symbol) async {
+    if (symbol == _symbol && _candles != null) {
+      _pushChart(symbol, _candles!, _flow ?? [], _opportunities ?? []);
+      return;
+    }
+    setState(() => _loadingSymbol = symbol);
+    try {
+      final candles = await getCandles(symbol);
+      final opps = Detector().detectAll(candles);
+      if (!mounted) return;
+      _pushChart(symbol, candles, _flow ?? [], opps);
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loadingSymbol = null);
+    }
+  }
+
+  void _pushChart(String symbol, List<Candle> candles, List<FlowData> flow,
+      List<Opportunity> opps) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChartScreen(
+          candles: candles,
+          flow: flow,
+          opportunities: opps,
+          symbol: symbol,
+          isLive: _isLive,
+        ),
+      ),
+    );
   }
 
   FlowData? get _latestFlow => _flow?.isNotEmpty == true ? _flow!.last : null;
@@ -155,8 +240,8 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildFlowCard(),
           const SizedBox(height: 14),
           _buildOpportunitiesCard(),
-          const SizedBox(height: 20),
-          _buildOpenChartButton(),
+          const SizedBox(height: 14),
+          _buildFiiStocksCard(),
           const SizedBox(height: 24),
         ],
       ),
@@ -546,55 +631,113 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Open chart button
+  // FII institutional stock universe
   // ---------------------------------------------------------------------------
 
-  Widget _buildOpenChartButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFFFB300),
-          foregroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+  Widget _buildFiiStocksCard() {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionLabel(
+            icon: Icons.corporate_fare,
+            label: 'FII INSTITUTIONAL UNIVERSE  (${_fiiStocks.length} stocks)',
+            color: const Color(0xFF1565C0),
           ),
-          elevation: 0,
-        ),
-        onPressed: _candles == null
-            ? null
-            : () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ChartScreen(
-                      candles: _candles!,
-                      flow: _flow ?? [],
-                      opportunities: _opportunities ?? [],
-                      symbol: _symbol,
-                      isLive: _isLive,
+          const SizedBox(height: 12),
+          ...List.generate(_fiiStocks.length, (i) {
+            final s = _fiiStocks[i];
+            final color = _sectorColor(s.sector);
+            final isLoading = _loadingSymbol == s.symbol;
+            return Column(
+              children: [
+                if (i > 0)
+                  const Divider(color: Color(0xFFE2E8F0), height: 1),
+                InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: _candles == null ? null : () => _openChartFor(s.symbol),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                s.symbol,
+                                style: const TextStyle(
+                                  color: Color(0xFF1E293B),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                s.name,
+                                style: const TextStyle(
+                                  color: Color(0xFF64748B),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.10),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                                color: color.withOpacity(0.35), width: 0.8),
+                          ),
+                          child: Text(
+                            s.sector,
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        isLoading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFFFFB300),
+                                ),
+                              )
+                            : const Icon(
+                                Icons.chevron_right,
+                                size: 18,
+                                color: Color(0xFF94A3B8),
+                              ),
+                      ],
                     ),
                   ),
-                );
-              },
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.candlestick_chart, size: 20),
-            SizedBox(width: 10),
-            Text(
-              'Open Chart View',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.4,
-              ),
-            ),
-          ],
-        ),
+                ),
+              ],
+            );
+          }),
+        ],
       ),
     );
   }
+
 }
 
 // ---------------------------------------------------------------------------
