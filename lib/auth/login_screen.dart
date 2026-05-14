@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tradexa/home/home_screen.dart';
+import 'package:tradexa/theme/app_colors.dart';
 
 // Change this to your preferred PIN.
 const String _kPin = '1234';
@@ -79,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -114,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen>
             color: const Color(0xFFFFFFFF),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: const Color(0xFFFFB300).withOpacity(0.4),
+              color: AppColors.primaryBlue.withOpacity(0.35),
               width: 1.2,
             ),
             boxShadow: [
@@ -128,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen>
           child: const Center(
             child: Icon(
               Icons.lock_outline_rounded,
-              color: Color(0xFFFFB300),
+              color: AppColors.primaryBlue,
               size: 28,
             ),
           ),
@@ -137,16 +138,16 @@ class _LoginScreenState extends State<LoginScreen>
         const Text(
           'Enter PIN',
           style: TextStyle(
-            color: Color(0xFF1E293B),
+            color: AppColors.activeText,
             fontSize: 22,
             fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 6),
         const Text(
-          'Kite Insights · Personal Access',
+          'Tradexe · Personal Access',
           style: TextStyle(
-            color: Color(0xFF64748B),
+            color: AppColors.inactiveText,
             fontSize: 13,
           ),
         ),
@@ -171,10 +172,10 @@ class _LoginScreenState extends State<LoginScreen>
         children: List.generate(_pinLength, (i) {
           final filled = i < _entered.length;
           final dotColor = _hasError
-              ? const Color(0xFFEF5350)
+              ? AppColors.danger
               : filled
-                  ? const Color(0xFFFFB300)
-                  : const Color(0xFFE2E8F0);
+                  ? AppColors.primaryBlue
+                  : AppColors.border;
           return Container(
             margin: const EdgeInsets.symmetric(horizontal: 10),
             width: 18,
@@ -183,9 +184,7 @@ class _LoginScreenState extends State<LoginScreen>
               color: dotColor,
               shape: BoxShape.circle,
               border: Border.all(
-                color: _hasError
-                    ? const Color(0xFFEF5350)
-                    : const Color(0xFFCBD5E1),
+                color: _hasError ? AppColors.danger : AppColors.border,
                 width: 1.5,
               ),
             ),
@@ -214,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen>
               if (k == 'del') {
                 return _NumKey(
                   child: const Icon(Icons.backspace_outlined,
-                      color: Color(0xFF64748B), size: 22),
+                      color: AppColors.inactiveText, size: 22),
                   onTap: _onDelete,
                 );
               }
@@ -222,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen>
                 child: Text(
                   k,
                   style: const TextStyle(
-                    color: Color(0xFF1E293B),
+                    color: AppColors.activeText,
                     fontSize: 22,
                     fontWeight: FontWeight.w600,
                   ),
@@ -254,7 +253,7 @@ class _NumKey extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+          border: Border.all(color: AppColors.border, width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),

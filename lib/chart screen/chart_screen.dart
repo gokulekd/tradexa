@@ -10,16 +10,17 @@ import 'package:tradexa/data/live_data.dart';
 import 'package:tradexa/model/candle.dart';
 import 'package:tradexa/oppertunity%20card/oppertunity_card.dart';
 import 'package:tradexa/portfolio/portfolio.dart';
+import 'package:tradexa/theme/app_colors.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
-const _bg      = Color(0xFF131722);
-const _panelBg = Color(0xFF1E222D);
-const _border  = Color(0xFF2A2E39);
-const _txtPri  = Color(0xFFD1D4DC);
-const _txtSec  = Color(0xFF787B86);
-const _bull    = Color(0xFF26A69A);
-const _bear    = Color(0xFFEF5350);
-const _amber   = Color(0xFFFFB300);
+const _bg = AppColors.background;
+const _panelBg = AppColors.surface;
+const _border = AppColors.border;
+const _txtPri = AppColors.activeText;
+const _txtSec = AppColors.inactiveText;
+const _bull = AppColors.buttonGreen;
+const _bear = AppColors.danger;
+const _amber = AppColors.primaryBlue;
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -45,7 +46,7 @@ class ChartScreen extends StatefulWidget {
 
 class _ChartScreenState extends State<ChartScreen> {
   static const _timeframes = ['1m', '5m', '15m', '1h', '1D', '1W'];
-  static const _expandedH  = 320.0;
+  static const _expandedH = 320.0;
 
   late final List<Opportunity> _opps;
   late final Stream<double> _ltpStream;
@@ -70,8 +71,7 @@ class _ChartScreenState extends State<ChartScreen> {
   Widget build(BuildContext context) {
     return StreamBuilder<double>(
       stream: _ltpStream,
-      initialData:
-          widget.candles.isNotEmpty ? widget.candles.last.close : 0.0,
+      initialData: widget.candles.isNotEmpty ? widget.candles.last.close : 0.0,
       builder: (context, snap) {
         final price = snap.data ?? 0.0;
         return Scaffold(
@@ -132,10 +132,11 @@ class _ChartScreenState extends State<ChartScreen> {
 
   Widget _buildTopBar(double price) {
     final hasPrev = widget.candles.length >= 2;
-    final prev = hasPrev ? widget.candles[widget.candles.length - 2].close : price;
+    final prev =
+        hasPrev ? widget.candles[widget.candles.length - 2].close : price;
     final delta = price - prev;
-    final pct   = prev != 0 ? (delta / prev) * 100 : 0.0;
-    final up    = delta >= 0;
+    final pct = prev != 0 ? (delta / prev) * 100 : 0.0;
+    final up = delta >= 0;
     final chgColor = up ? _bull : _bear;
 
     return Container(
@@ -196,8 +197,9 @@ class _ChartScreenState extends State<ChartScreen> {
         // Demo balance chip
         Consumer<Portfolio>(builder: (_, p, __) {
           final equity = p.equity(price);
-          final ret =
-              ((equity - Portfolio.startingBalance) / Portfolio.startingBalance) * 100;
+          final ret = ((equity - Portfolio.startingBalance) /
+                  Portfolio.startingBalance) *
+              100;
           final c = ret >= 0 ? _bull : _bear;
           return GestureDetector(
             onTap: () {
@@ -252,7 +254,7 @@ class _ChartScreenState extends State<ChartScreen> {
               child: Text(
                 _timeframes[i],
                 style: TextStyle(
-                  color: sel ? _amber : _txtSec,
+                  color: sel ? _txtPri : _txtSec,
                   fontSize: 12,
                   fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
                 ),
@@ -310,16 +312,23 @@ class _ChartScreenState extends State<ChartScreen> {
           ),
         ),
         const SizedBox(width: 10),
-        _FlowVal(label: 'FII', value: fmtCr(last.fiiCash),
+        _FlowVal(
+            label: 'FII',
+            value: fmtCr(last.fiiCash),
             color: last.fiiCash >= 0 ? _bull : _bear),
         const SizedBox(width: 10),
-        _FlowVal(label: 'DII', value: fmtCr(last.diiCash),
+        _FlowVal(
+            label: 'DII',
+            value: fmtCr(last.diiCash),
             color: last.diiCash >= 0 ? _bull : _bear),
         const SizedBox(width: 10),
-        _FlowVal(label: 'FII F&O', value: fmtCr(last.fiiFnoIndexNetLong),
+        _FlowVal(
+            label: 'FII F&O',
+            value: fmtCr(last.fiiFnoIndexNetLong),
             color: last.fiiFnoIndexNetLong >= 0 ? _bull : _bear),
         const Spacer(),
-        _Sparkline(values: widget.flow.map((f) => f.fiiCash).toList(),
+        _Sparkline(
+            values: widget.flow.map((f) => f.fiiCash).toList(),
             color: regColor),
       ]),
     );
@@ -360,9 +369,7 @@ class _ChartScreenState extends State<ChartScreen> {
             ),
             const Spacer(),
             Icon(
-              _panelOpen
-                  ? Icons.keyboard_arrow_down
-                  : Icons.keyboard_arrow_up,
+              _panelOpen ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up,
               size: 16,
               color: _txtSec,
             ),
@@ -375,13 +382,16 @@ class _ChartScreenState extends State<ChartScreen> {
   // ── Bottom panel content ──────────────────────────────────────────────────
 
   Widget _buildBottomPanel(double price) {
-    final fmt = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+    final fmt =
+        NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
     return Consumer<Portfolio>(builder: (context, p, _) {
-      final equity       = p.equity(price);
-      final unrealized   = p.unrealizedPnL(price);
-      final returnVs     = ((equity - Portfolio.startingBalance) / Portfolio.startingBalance) * 100;
-      final retColor     = returnVs >= 0 ? _bull : _bear;
+      final equity = p.equity(price);
+      final unrealized = p.unrealizedPnL(price);
+      final returnVs =
+          ((equity - Portfolio.startingBalance) / Portfolio.startingBalance) *
+              100;
+      final retColor = returnVs >= 0 ? _bull : _bear;
 
       return Column(children: [
         // Mini balance strip
@@ -424,20 +434,19 @@ class _ChartScreenState extends State<ChartScreen> {
           Container(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
             decoration: const BoxDecoration(
-              border:
-                  Border(bottom: BorderSide(color: _border, width: 0.5)),
+              border: Border(bottom: BorderSide(color: _border, width: 0.5)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: p.openPositions.map((pos) {
-                final pnl   = pos.currentPnL(price);
-                final pnlC  = pnl >= 0 ? _bull : _bear;
+                final pnl = pos.currentPnL(price);
+                final pnlC = pnl >= 0 ? _bull : _bear;
                 return Container(
                   margin: const EdgeInsets.only(bottom: 4),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1A2235),
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(color: _border),
                   ),
@@ -466,8 +475,7 @@ class _ChartScreenState extends State<ChartScreen> {
                     ),
                     const SizedBox(width: 6),
                     Text(pos.setupType.shortLabel,
-                        style:
-                            const TextStyle(color: _txtSec, fontSize: 9.5)),
+                        style: const TextStyle(color: _txtSec, fontSize: 9.5)),
                     const Spacer(),
                     Text(
                       '${pnl >= 0 ? '+' : ''}${fmt.format(pnl)}',
@@ -484,8 +492,11 @@ class _ChartScreenState extends State<ChartScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _border,
+                          color: AppColors.primaryBlue.withOpacity(0.10),
                           borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: AppColors.primaryBlue.withOpacity(0.2),
+                          ),
                         ),
                         child: const Text('Close',
                             style: TextStyle(
@@ -517,8 +528,11 @@ class _ChartScreenState extends State<ChartScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
               decoration: BoxDecoration(
-                color: _border,
+                color: AppColors.primaryBlue.withOpacity(0.10),
                 borderRadius: BorderRadius.circular(3),
+                border: Border.all(
+                  color: AppColors.primaryBlue.withOpacity(0.2),
+                ),
               ),
               child: Text('${_opps.length}',
                   style: const TextStyle(
@@ -552,17 +566,14 @@ class _ChartScreenState extends State<ChartScreen> {
                       riskBudget: _riskBudget,
                       maxCapital: perTrade,
                       onTap: () => setState(() =>
-                          _selectedIdx =
-                              idx == _selectedIdx ? null : idx),
+                          _selectedIdx = idx == _selectedIdx ? null : idx),
                       onTakeTrade: (qty) {
                         final err = context.read<Portfolio>().takeTrade(
                             opp: op, qty: qty, symbol: widget.symbol);
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(SnackBar(
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                           content: Text(err ??
                               'Trade taken · ${op.direction.label} $qty @ ₹${op.entry.toStringAsFixed(2)}'),
-                          backgroundColor:
-                              err == null ? _bull : _bear,
+                          backgroundColor: err == null ? _bull : _bear,
                           duration: const Duration(seconds: 2),
                         ));
                       },
@@ -600,8 +611,7 @@ class _OHLCVOverlay extends StatelessWidget {
         children: [
           Text(
             fmt.format(candle.time),
-            style:
-                const TextStyle(color: _txtSec, fontSize: 9.5),
+            style: const TextStyle(color: _txtSec, fontSize: 9.5),
           ),
           const SizedBox(height: 4),
           _OHLCRow('O', candle.open, color),
@@ -730,8 +740,7 @@ class _FlowVal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(mainAxisSize: MainAxisSize.min, children: [
-      Text('$label ',
-          style: const TextStyle(color: _txtSec, fontSize: 9.5)),
+      Text('$label ', style: const TextStyle(color: _txtSec, fontSize: 9.5)),
       Text(value,
           style: TextStyle(
               color: color, fontSize: 9.5, fontWeight: FontWeight.w700)),
@@ -786,6 +795,5 @@ class _SparklinePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _SparklinePainter old) =>
-      old.values != values;
+  bool shouldRepaint(covariant _SparklinePainter old) => old.values != values;
 }

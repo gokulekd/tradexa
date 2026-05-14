@@ -50,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: Colors.black,
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnim,
@@ -58,71 +58,14 @@ class _SplashScreenState extends State<SplashScreen>
             scale: _scaleAnim,
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: [
-                _LogoMark(),
-                const SizedBox(height: 28),
-                const Text(
-                  'KITE INSIGHTS',
-                  style: TextStyle(
-                    color: Color(0xFFFFB300),
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 4.0,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Institutional · Smart Money · Setups',
-                  style: TextStyle(
-                    color: Color(0xFF64748B),
-                    fontSize: 12,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.w500,
-                  ),
+              children: const [
+                Image(
+                  image: AssetImage('assets/splash_screen/tradexe_logo.png'),
+                  width: 240,
+                  fit: BoxFit.contain,
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LogoMark extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 88,
-      height: 88,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: const Color(0xFFFFB300).withOpacity(0.5),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFFFB300).withOpacity(0.15),
-            blurRadius: 32,
-            spreadRadius: 4,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: const Center(
-        child: Text(
-          'KI',
-          style: TextStyle(
-            color: Color(0xFFFFB300),
-            fontSize: 32,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 2,
           ),
         ),
       ),

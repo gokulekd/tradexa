@@ -3,14 +3,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tradexa/model/candle.dart';
+import 'package:tradexa/theme/app_colors.dart';
 
-const _cardBg  = Color(0xFF1A2235);
-const _border  = Color(0xFF2A2E39);
-const _txtPri  = Color(0xFFD1D4DC);
-const _txtSec  = Color(0xFF787B86);
-const _chipBg  = Color(0xFF252D3D);
-const _bull    = Color(0xFF26A69A);
-const _bear    = Color(0xFFEF5350);
+const _cardBg = AppColors.surface;
+const _border = AppColors.border;
+const _txtPri = AppColors.activeText;
+const _txtSec = AppColors.inactiveText;
+const _chipBg = Color(0xFFF4F7FF);
+const _bull = AppColors.buttonGreen;
+const _bear = AppColors.danger;
 
 class OpportunityCard extends StatelessWidget {
   final Opportunity opp;
@@ -32,13 +33,14 @@ class OpportunityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt        = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
-    final qty        = opp.suggestedQty(riskBudget, maxCapital: maxCapital);
+    final fmt =
+        NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+    final qty = opp.suggestedQty(riskBudget, maxCapital: maxCapital);
     final constraint = opp.qtyConstraintLabel(riskBudget, maxCapital);
-    final capital    = opp.capitalRequired(qty);
-    final maxLoss    = opp.maxLoss(qty);
-    final maxGain    = opp.maxGain(qty);
-    final dirColor   = opp.direction == Direction.long ? _bull : _bear;
+    final capital = opp.capitalRequired(qty);
+    final maxLoss = opp.maxLoss(qty);
+    final maxGain = opp.maxGain(qty);
+    final dirColor = opp.direction == Direction.long ? _bull : _bear;
 
     return GestureDetector(
       onTap: onTap,
@@ -80,20 +82,23 @@ class OpportunityCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               opp.reasoning,
-              style: const TextStyle(
-                  color: _txtSec, fontSize: 11.5, height: 1.3),
+              style:
+                  const TextStyle(color: _txtSec, fontSize: 11.5, height: 1.3),
             ),
             const SizedBox(height: 10),
 
             // Entry / SL / Target
             Row(children: [
-              _PriceCell(label: 'ENTRY',
+              _PriceCell(
+                  label: 'ENTRY',
                   value: '₹${opp.entry.toStringAsFixed(2)}',
-                  color: const Color(0xFFFFB300)),
-              _PriceCell(label: 'STOP',
+                  color: AppColors.primaryBlue),
+              _PriceCell(
+                  label: 'STOP',
                   value: '₹${opp.stopLoss.toStringAsFixed(2)}',
                   color: _bear),
-              _PriceCell(label: 'TARGET',
+              _PriceCell(
+                  label: 'TARGET',
                   value: '₹${opp.target.toStringAsFixed(2)}',
                   color: _bull),
             ]),
@@ -136,9 +141,9 @@ class OpportunityCard extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: qty > 0 ? () => onTakeTrade(qty) : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: dirColor,
+                  backgroundColor: AppColors.buttonGreen,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: _border,
+                  disabledBackgroundColor: AppColors.border,
                   disabledForegroundColor: _txtSec,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(5),
@@ -231,7 +236,7 @@ class _ConfidenceDot extends StatelessWidget {
     final color = value >= 0.75
         ? _bull
         : value >= 0.5
-            ? const Color(0xFFFFB300)
+            ? AppColors.primaryBlue
             : _bear;
     return Tooltip(
       message: 'Confidence ${(value * 100).toStringAsFixed(0)}%',

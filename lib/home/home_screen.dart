@@ -7,6 +7,7 @@ import 'package:tradexa/detector/detector.dart';
 import 'package:tradexa/model/candle.dart';
 import 'package:tradexa/portfolio/portfolio.dart';
 import 'package:tradexa/settings/api_settings_screen.dart';
+import 'package:tradexa/theme/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,46 +28,58 @@ class _HomeScreenState extends State<HomeScreen> {
   static const _symbol = 'RELIANCE';
 
   static const _fiiStocks = [
-    _Stock('RELIANCE',   'Reliance Industries',    'Energy'),
-    _Stock('HDFCBANK',   'HDFC Bank',              'Financials'),
-    _Stock('ICICIBANK',  'ICICI Bank',             'Financials'),
-    _Stock('AXISBANK',   'Axis Bank',              'Financials'),
-    _Stock('SBIN',       'State Bank of India',    'Financials'),
-    _Stock('KOTAKBANK',  'Kotak Mahindra Bank',    'Financials'),
-    _Stock('INFY',       'Infosys',                'IT'),
-    _Stock('TCS',        'TCS',                    'IT'),
-    _Stock('HCLTECH',    'HCL Technologies',       'IT'),
-    _Stock('WIPRO',      'Wipro',                  'IT'),
-    _Stock('BHARTIARTL', 'Bharti Airtel',          'Telecom'),
-    _Stock('ITC',        'ITC',                    'Staples'),
-    _Stock('HINDUNILVR', 'Hindustan Unilever',     'Staples'),
-    _Stock('LT',         'Larsen & Toubro',        'Cap Goods'),
-    _Stock('BAJFINANCE', 'Bajaj Finance',          'NBFC'),
-    _Stock('BAJAJFINSV', 'Bajaj Finserv',          'NBFC'),
-    _Stock('MARUTI',     'Maruti Suzuki',          'Auto'),
-    _Stock('TATAMOTORS', 'Tata Motors',            'Auto'),
-    _Stock('M&M',        'Mahindra & Mahindra',    'Auto'),
-    _Stock('ASIANPAINT', 'Asian Paints',           'Discretionary'),
-    _Stock('ULTRACEMCO', 'UltraTech Cement',       'Materials'),
-    _Stock('SUNPHARMA',  'Sun Pharma',             'Pharma'),
-    _Stock('DRREDDY',    "Dr Reddy's",             'Pharma'),
-    _Stock('CIPLA',      'Cipla',                  'Pharma'),
+    _Stock('RELIANCE', 'Reliance Industries', 'Energy'),
+    _Stock('HDFCBANK', 'HDFC Bank', 'Financials'),
+    _Stock('ICICIBANK', 'ICICI Bank', 'Financials'),
+    _Stock('AXISBANK', 'Axis Bank', 'Financials'),
+    _Stock('SBIN', 'State Bank of India', 'Financials'),
+    _Stock('KOTAKBANK', 'Kotak Mahindra Bank', 'Financials'),
+    _Stock('INFY', 'Infosys', 'IT'),
+    _Stock('TCS', 'TCS', 'IT'),
+    _Stock('HCLTECH', 'HCL Technologies', 'IT'),
+    _Stock('WIPRO', 'Wipro', 'IT'),
+    _Stock('BHARTIARTL', 'Bharti Airtel', 'Telecom'),
+    _Stock('ITC', 'ITC', 'Staples'),
+    _Stock('HINDUNILVR', 'Hindustan Unilever', 'Staples'),
+    _Stock('LT', 'Larsen & Toubro', 'Cap Goods'),
+    _Stock('BAJFINANCE', 'Bajaj Finance', 'NBFC'),
+    _Stock('BAJAJFINSV', 'Bajaj Finserv', 'NBFC'),
+    _Stock('MARUTI', 'Maruti Suzuki', 'Auto'),
+    _Stock('TATAMOTORS', 'Tata Motors', 'Auto'),
+    _Stock('M&M', 'Mahindra & Mahindra', 'Auto'),
+    _Stock('ASIANPAINT', 'Asian Paints', 'Discretionary'),
+    _Stock('ULTRACEMCO', 'UltraTech Cement', 'Materials'),
+    _Stock('SUNPHARMA', 'Sun Pharma', 'Pharma'),
+    _Stock('DRREDDY', "Dr Reddy's", 'Pharma'),
+    _Stock('CIPLA', 'Cipla', 'Pharma'),
   ];
 
   static Color _sectorColor(String sector) {
     switch (sector) {
-      case 'Energy':       return const Color(0xFFFFB300);
-      case 'Financials':   return const Color(0xFF1565C0);
-      case 'IT':           return const Color(0xFF6A1B9A);
-      case 'Telecom':      return const Color(0xFF00838F);
-      case 'Staples':      return const Color(0xFF2E7D32);
-      case 'Cap Goods':    return const Color(0xFF283593);
-      case 'NBFC':         return const Color(0xFF00695C);
-      case 'Auto':         return const Color(0xFFAD1457);
-      case 'Discretionary':return const Color(0xFFE65100);
-      case 'Materials':    return const Color(0xFF5D4037);
-      case 'Pharma':       return const Color(0xFF0277BD);
-      default:             return const Color(0xFF64748B);
+      case 'Energy':
+        return AppColors.primaryBlue;
+      case 'Financials':
+        return const Color(0xFF3F6AE5);
+      case 'IT':
+        return const Color(0xFF6A1B9A);
+      case 'Telecom':
+        return const Color(0xFF00838F);
+      case 'Staples':
+        return AppColors.buttonGreen;
+      case 'Cap Goods':
+        return const Color(0xFF283593);
+      case 'NBFC':
+        return const Color(0xFF00695C);
+      case 'Auto':
+        return const Color(0xFFAD1457);
+      case 'Discretionary':
+        return const Color(0xFFE65100);
+      case 'Materials':
+        return const Color(0xFF5D4037);
+      case 'Pharma':
+        return const Color(0xFF0277BD);
+      default:
+        return AppColors.inactiveText;
     }
   }
 
@@ -149,23 +162,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   FlowData? get _latestFlow => _flow?.isNotEmpty == true ? _flow!.last : null;
-  double get _lastClose => _candles?.isNotEmpty == true ? _candles!.last.close : 0;
+  double get _lastClose =>
+      _candles?.isNotEmpty == true ? _candles!.last.close : 0;
 
   Color get _regimeColor {
     switch (_latestFlow?.regime) {
       case 'risk-on':
-        return const Color(0xFF26A69A);
+        return AppColors.buttonGreen;
       case 'risk-off':
-        return const Color(0xFFEF5350);
+        return AppColors.danger;
       default:
-        return const Color(0xFFFFB300);
+        return AppColors.primaryBlue;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppColors.background,
       appBar: _buildAppBar(),
       body: _candles == null && _error == null
           ? _buildLoading()
@@ -180,11 +194,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(color: Color(0xFFFFB300)),
+          CircularProgressIndicator(color: AppColors.primaryBlue),
           SizedBox(height: 16),
           Text(
             'Loading market data…',
-            style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+            style: TextStyle(color: AppColors.inactiveText, fontSize: 13),
           ),
         ],
       ),
@@ -198,18 +212,17 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.wifi_off, size: 40, color: Color(0xFF94A3B8)),
+            const Icon(Icons.wifi_off, size: 40, color: AppColors.inactiveText),
             const SizedBox(height: 16),
             Text(
               _error!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+              style:
+                  const TextStyle(color: AppColors.inactiveText, fontSize: 13),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFFB300),
-                foregroundColor: const Color(0xFF1E293B),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -226,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildBody() {
     return RefreshIndicator(
-      color: const Color(0xFFFFB300),
+      color: AppColors.primaryBlue,
       onRefresh: _load,
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -250,27 +263,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   AppBar _buildAppBar() {
     return AppBar(
-      backgroundColor: const Color(0xFFFFFFFF),
+      backgroundColor: AppColors.surface,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: const Color(0xFFE2E8F0)),
+        child: Container(height: 1, color: AppColors.border),
       ),
       title: Row(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFB300).withOpacity(0.12),
+              color: AppColors.primaryBlue.withOpacity(0.12),
               borderRadius: BorderRadius.circular(6),
               border: Border.all(
-                  color: const Color(0xFFFFB300).withOpacity(0.5), width: 0.8),
+                  color: AppColors.primaryBlue.withOpacity(0.5), width: 0.8),
             ),
             child: const Text(
-              'KITE INSIGHTS',
+              'TRADEXE',
               style: TextStyle(
-                color: Color(0xFFFFB300),
+                color: AppColors.primaryBlue,
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.5,
@@ -281,24 +294,27 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.tune, size: 20, color: Color(0xFF64748B)),
+          icon: const Icon(Icons.tune, size: 20, color: AppColors.inactiveText),
           tooltip: 'API Settings',
           onPressed: () async {
             await Navigator.of(context).push(
-              MaterialPageRoute(
-                  builder: (_) => const ApiSettingsScreen()),
+              MaterialPageRoute(builder: (_) => const ApiSettingsScreen()),
             );
             _load(); // Reload with potentially new credentials.
           },
         ),
         IconButton(
-          icon: const Icon(Icons.refresh, size: 20, color: Color(0xFF64748B)),
+          icon: const Icon(Icons.refresh,
+              size: 20, color: AppColors.inactiveText),
           tooltip: 'Refresh data',
           onPressed: _load,
         ),
         IconButton(
-          icon: const Icon(Icons.account_balance_wallet_outlined,
-              size: 20, color: Color(0xFF64748B)),
+          icon: const Icon(
+            Icons.account_balance_wallet_outlined,
+            size: 20,
+            color: AppColors.inactiveText,
+          ),
           tooltip: 'Reset demo balance',
           onPressed: () => context.read<Portfolio>().reset(),
         ),
@@ -315,13 +331,13 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: _isLive
-            ? const Color(0xFF26A69A).withOpacity(0.08)
-            : const Color(0xFFFFB300).withOpacity(0.08),
+            ? AppColors.buttonGreen.withOpacity(0.08)
+            : AppColors.primaryBlue.withOpacity(0.08),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _isLive
-              ? const Color(0xFF26A69A).withOpacity(0.3)
-              : const Color(0xFFFFB300).withOpacity(0.3),
+              ? AppColors.buttonGreen.withOpacity(0.3)
+              : AppColors.primaryBlue.withOpacity(0.3),
         ),
       ),
       child: Row(
@@ -329,9 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Icon(
             _isLive ? Icons.circle : Icons.science_outlined,
             size: 10,
-            color: _isLive
-                ? const Color(0xFF26A69A)
-                : const Color(0xFFFFB300),
+            color: _isLive ? AppColors.buttonGreen : AppColors.primaryBlue,
           ),
           const SizedBox(width: 8),
           Text(
@@ -339,9 +353,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? 'LIVE · Angel One SmartAPI'
                 : 'DEMO MODE · Mock data (tap ⚙ to connect Angel One)',
             style: TextStyle(
-              color: _isLive
-                  ? const Color(0xFF26A69A)
-                  : const Color(0xFFFFB300),
+              color: _isLive ? AppColors.buttonGreen : AppColors.primaryBlue,
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
             ),
@@ -363,9 +375,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ((equity - Portfolio.startingBalance) / Portfolio.startingBalance) *
                 100;
         final isPositive = returnPct >= 0;
-        final pnlColor = isPositive
-            ? const Color(0xFF26A69A)
-            : const Color(0xFFEF5350);
+        final pnlColor = isPositive ? AppColors.buttonGreen : AppColors.danger;
 
         return _Card(
           child: Column(
@@ -374,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _SectionLabel(
                 icon: Icons.account_balance_wallet_outlined,
                 label: 'DEMO PORTFOLIO',
-                color: const Color(0xFF64748B),
+                color: AppColors.inactiveText,
               ),
               const SizedBox(height: 14),
               Row(
@@ -385,12 +395,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       const Text('Equity',
                           style: TextStyle(
-                              color: Color(0xFF64748B), fontSize: 11)),
+                              color: AppColors.inactiveText, fontSize: 11)),
                       const SizedBox(height: 2),
                       Text(
                         _fmt.format(equity),
                         style: const TextStyle(
-                          color: Color(0xFF1E293B),
+                          color: AppColors.activeText,
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
                         ),
@@ -399,8 +409,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: pnlColor.withOpacity(0.10),
                       borderRadius: BorderRadius.circular(8),
@@ -418,28 +428,28 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              const Divider(color: Color(0xFFE2E8F0), height: 1),
+              const Divider(color: AppColors.border, height: 1),
               const SizedBox(height: 12),
               Row(
                 children: [
                   _StatItem(
                     label: 'Cash',
                     value: _fmt.format(p.cash),
-                    valueColor: const Color(0xFF1E293B),
+                    valueColor: AppColors.activeText,
                   ),
                   const SizedBox(width: 24),
                   _StatItem(
                     label: 'Positions',
                     value: '${p.openPositions.length}',
                     valueColor: p.openPositions.isEmpty
-                        ? const Color(0xFF64748B)
-                        : const Color(0xFFFFB300),
+                        ? AppColors.inactiveText
+                        : AppColors.primaryBlue,
                   ),
                   const SizedBox(width: 24),
                   _StatItem(
                     label: 'Starting',
                     value: _fmt.format(Portfolio.startingBalance),
-                    valueColor: const Color(0xFF94A3B8),
+                    valueColor: AppColors.inactiveText,
                   ),
                 ],
               ),
@@ -486,7 +496,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const Text(
                 'MARKET REGIME',
                 style: TextStyle(
-                    color: Color(0xFF64748B),
+                    color: AppColors.inactiveText,
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.8),
@@ -510,7 +520,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 _symbol,
                 style: const TextStyle(
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.inactiveText,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
@@ -519,7 +529,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 '₹${_lastClose.toStringAsFixed(2)}',
                 style: const TextStyle(
-                  color: Color(0xFF1E293B),
+                  color: AppColors.activeText,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
@@ -545,7 +555,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _SectionLabel(
             icon: Icons.bar_chart,
             label: 'FII / DII FLOW (Latest)',
-            color: const Color(0xFF64748B),
+            color: AppColors.inactiveText,
           ),
           const SizedBox(height: 14),
           Row(
@@ -561,7 +571,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 10),
             const Text(
               'Source: NSE India (live)',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
+              style: TextStyle(color: AppColors.inactiveText, fontSize: 10.5),
             ),
           ],
         ],
@@ -596,7 +606,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _SectionLabel(
             icon: Icons.auto_graph,
             label: 'DETECTED SETUPS',
-            color: const Color(0xFFFFB300),
+            color: AppColors.primaryBlue,
           ),
           const SizedBox(height: 14),
           Row(
@@ -604,7 +614,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _SetupBadge(
                   label: 'Order Blocks',
                   count: obCount,
-                  color: const Color(0xFF26A69A)),
+                  color: AppColors.buttonGreen),
               const SizedBox(width: 10),
               _SetupBadge(
                   label: 'FVGs',
@@ -614,14 +624,14 @@ class _HomeScreenState extends State<HomeScreen> {
               _SetupBadge(
                   label: 'Sweeps',
                   count: sweepCount,
-                  color: const Color(0xFFFFB300)),
+                  color: AppColors.primaryBlue),
             ],
           ),
           const SizedBox(height: 10),
           Text(
             '${opps.length} total opportunities on 15m chart',
             style: const TextStyle(
-              color: Color(0xFF94A3B8),
+              color: AppColors.inactiveText,
               fontSize: 11.5,
             ),
           ),
@@ -642,7 +652,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _SectionLabel(
             icon: Icons.corporate_fare,
             label: 'FII INSTITUTIONAL UNIVERSE  (${_fiiStocks.length} stocks)',
-            color: const Color(0xFF1565C0),
+            color: AppColors.primaryBlue,
           ),
           const SizedBox(height: 12),
           ...List.generate(_fiiStocks.length, (i) {
@@ -651,11 +661,11 @@ class _HomeScreenState extends State<HomeScreen> {
             final isLoading = _loadingSymbol == s.symbol;
             return Column(
               children: [
-                if (i > 0)
-                  const Divider(color: Color(0xFFE2E8F0), height: 1),
+                if (i > 0) const Divider(color: AppColors.border, height: 1),
                 InkWell(
                   borderRadius: BorderRadius.circular(8),
-                  onTap: _candles == null ? null : () => _openChartFor(s.symbol),
+                  onTap:
+                      _candles == null ? null : () => _openChartFor(s.symbol),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     child: Row(
@@ -676,7 +686,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               Text(
                                 s.symbol,
                                 style: const TextStyle(
-                                  color: Color(0xFF1E293B),
+                                  color: AppColors.activeText,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -685,7 +695,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               Text(
                                 s.name,
                                 style: const TextStyle(
-                                  color: Color(0xFF64748B),
+                                  color: AppColors.inactiveText,
                                   fontSize: 11,
                                 ),
                               ),
@@ -718,13 +728,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                 height: 16,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Color(0xFFFFB300),
+                                  color: AppColors.primaryBlue,
                                 ),
                               )
                             : const Icon(
                                 Icons.chevron_right,
                                 size: 18,
-                                color: Color(0xFF94A3B8),
+                                color: AppColors.inactiveText,
                               ),
                       ],
                     ),
@@ -737,7 +747,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
 }
 
 // ---------------------------------------------------------------------------
@@ -756,7 +765,7 @@ class _Card extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+        border: Border.all(color: AppColors.border, width: 0.8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -811,13 +820,11 @@ class _StatItem extends StatelessWidget {
       children: [
         Text(label,
             style:
-                const TextStyle(color: Color(0xFF64748B), fontSize: 10.5)),
+                const TextStyle(color: AppColors.inactiveText, fontSize: 10.5)),
         const SizedBox(height: 2),
         Text(value,
             style: TextStyle(
-                color: valueColor,
-                fontSize: 13,
-                fontWeight: FontWeight.w700)),
+                color: valueColor, fontSize: 13, fontWeight: FontWeight.w700)),
       ],
     );
   }
@@ -831,8 +838,7 @@ class _FlowItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPos = value >= 0;
-    final color =
-        isPos ? const Color(0xFF26A69A) : const Color(0xFFEF5350);
+    final color = isPos ? AppColors.buttonGreen : AppColors.danger;
     final sign = isPos ? '+' : '−';
     return Expanded(
       child: Container(
@@ -847,14 +853,12 @@ class _FlowItem extends StatelessWidget {
           children: [
             Text(label,
                 style: const TextStyle(
-                    color: Color(0xFF64748B), fontSize: 10)),
+                    color: AppColors.inactiveText, fontSize: 10)),
             const SizedBox(height: 4),
             Text(
               '$sign₹${value.abs().toStringAsFixed(0)}cr',
               style: TextStyle(
-                  color: color,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700),
+                  color: color, fontSize: 13, fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -891,7 +895,7 @@ class _SetupBadge extends StatelessWidget {
             const SizedBox(height: 2),
             Text(label,
                 style: const TextStyle(
-                    color: Color(0xFF64748B), fontSize: 10)),
+                    color: AppColors.inactiveText, fontSize: 10)),
           ],
         ),
       ),

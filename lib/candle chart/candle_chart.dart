@@ -7,16 +7,17 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tradexa/model/candle.dart';
+import 'package:tradexa/theme/app_colors.dart';
 
 // ── Palette (shared across painters) ─────────────────────────────────────────
-const _bg      = Color(0xFF131722);
-const _panelBg = Color(0xFF1E222D);
-const _grid    = Color(0xFF2A2E39);
-const _txtSec  = Color(0xFF787B86);
-const _bull    = Color(0xFF26A69A);
-const _bear    = Color(0xFFEF5350);
-const _xhClr   = Color(0xFF9598A1); // crosshair
-const _amber   = Color(0xFFFFB300);
+const _bg = AppColors.background;
+const _panelBg = AppColors.surface;
+const _grid = AppColors.border;
+const _txtSec = AppColors.inactiveText;
+const _bull = AppColors.buttonGreen;
+const _bear = AppColors.danger;
+const _xhClr = AppColors.inactiveText; // crosshair
+const _amber = AppColors.primaryBlue;
 
 class CandleChart extends StatefulWidget {
   final List<Candle> candles;
@@ -39,11 +40,11 @@ class CandleChart extends StatefulWidget {
 }
 
 class _CandleChartState extends State<CandleChart> {
-  static const double _slotW  = 12.0;
-  static const double _canW   = 8.0;
+  static const double _slotW = 12.0;
+  static const double _canW = 8.0;
   static const double _yAxisW = 64.0;
   static const double _xAxisH = 22.0;
-  static const double _volR   = 0.18;
+  static const double _volR = 0.18;
 
   final _scroll = ScrollController();
   Offset? _crosshair; // local canvas coords of the CustomPaint
@@ -119,14 +120,14 @@ class _CandleChartState extends State<CandleChart> {
 
   @override
   Widget build(BuildContext context) {
-    final r   = _range();
-    final mv  = _maxVol();
+    final r = _range();
+    final mv = _maxVol();
     final totalW = widget.candles.length * _slotW + 40.0;
 
     return LayoutBuilder(builder: (ctx, box) {
-      final fullH  = box.maxHeight;
+      final fullH = box.maxHeight;
       final chartH = fullH - _xAxisH;
-      final volH   = chartH * _volR;
+      final volH = chartH * _volR;
       final priceH = chartH - volH;
 
       double? crossPrice;
@@ -145,7 +146,8 @@ class _CandleChartState extends State<CandleChart> {
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onLongPressStart: (d) => _setCrosshair(d.localPosition, priceH),
-              onLongPressMoveUpdate: (d) => _setCrosshair(d.localPosition, priceH),
+              onLongPressMoveUpdate: (d) =>
+                  _setCrosshair(d.localPosition, priceH),
               onLongPressEnd: (_) => _clearCrosshair(),
               onTapUp: (d) => _handleTap(d.localPosition, r, priceH),
               child: CustomPaint(
@@ -178,9 +180,8 @@ class _CandleChartState extends State<CandleChart> {
               priceH: priceH,
               volH: volH,
               xAxisH: _xAxisH,
-              latestClose: widget.candles.isNotEmpty
-                  ? widget.candles.last.close
-                  : null,
+              latestClose:
+                  widget.candles.isNotEmpty ? widget.candles.last.close : null,
               crossPrice: crossPrice,
             ),
           ),
@@ -330,10 +331,10 @@ class _ChartPainter extends CustomPainter {
   }
 
   void _drawZone(Canvas canvas, Size size, Opportunity op, bool sel) {
-    final left  = _cx(op.anchorIndex);
+    final left = _cx(op.anchorIndex);
     final right = size.width;
-    final yTop  = _y(op.zoneTop);
-    final yBot  = _y(op.zoneBottom);
+    final yTop = _y(op.zoneTop);
+    final yBot = _y(op.zoneBottom);
     if (yTop > priceH && yBot > priceH) return;
     final base = op.direction == Direction.long ? _bull : _bear;
 
@@ -371,8 +372,8 @@ class _ChartPainter extends CustomPainter {
             ? _y(op.zoneBottom)
             : _y(op.zoneTop);
         final c = base.withOpacity(sel ? 1.0 : 0.65);
-        _dashedLine(canvas, Offset(left - 20, lineY), Offset(right, lineY),
-            c, sel ? 1.8 : 1.1);
+        _dashedLine(canvas, Offset(left - 20, lineY), Offset(right, lineY), c,
+            sel ? 1.8 : 1.1);
         canvas.drawCircle(
             Offset(_cx(op.anchorIndex), lineY), 3.0, Paint()..color = c);
         _zoneLabel(canvas, left, lineY - 16, op.type.shortLabel, base, sel);
@@ -391,7 +392,8 @@ class _ChartPainter extends CustomPainter {
     final y = _y(price);
     if (y < 0 || y > priceH) return;
     _dashedLine(canvas, Offset(_cx(fromIdx), y), Offset(size.width, y),
-        color.withOpacity(0.85), 0.9, dashW: 5, gapW: 3);
+        color.withOpacity(0.85), 0.9,
+        dashW: 5, gapW: 3);
     final tp = TextPainter(
       text: TextSpan(
         text: ' $label ${price.toStringAsFixed(1)} ',
@@ -530,7 +532,7 @@ class _YAxisPainter extends CustomPainter {
             ..strokeWidth = 0.9,
         );
         _priceTag(canvas, size.width, y, latestClose!.toStringAsFixed(2),
-            _amber, const Color(0xFF131722));
+            _amber, AppColors.background);
       }
     }
 
@@ -538,19 +540,18 @@ class _YAxisPainter extends CustomPainter {
     if (crossPrice != null) {
       final y = _y(crossPrice!);
       if (y >= 0 && y <= priceH) {
-        _priceTag(canvas, size.width, y, crossPrice!.toStringAsFixed(2),
-            _xhClr, Colors.white);
+        _priceTag(canvas, size.width, y, crossPrice!.toStringAsFixed(2), _xhClr,
+            Colors.white);
       }
     }
   }
 
-  void _priceTag(Canvas canvas, double width, double y, String text,
-      Color bg, Color fg) {
+  void _priceTag(
+      Canvas canvas, double width, double y, String text, Color bg, Color fg) {
     final tp = TextPainter(
       text: TextSpan(
         text: ' $text ',
-        style: TextStyle(
-            color: fg, fontSize: 9.5, fontWeight: FontWeight.w700),
+        style: TextStyle(color: fg, fontSize: 9.5, fontWeight: FontWeight.w700),
       ),
       textDirection: ui.TextDirection.ltr,
     )..layout();

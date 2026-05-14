@@ -10,6 +10,7 @@
 import 'package:flutter/material.dart';
 import 'package:tradexa/data/angel_session.dart';
 import 'package:tradexa/data/live_data.dart';
+import 'package:tradexa/theme/app_colors.dart';
 
 class ApiSettingsScreen extends StatefulWidget {
   final bool isFirstTime;
@@ -68,7 +69,6 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Credentials saved. Live data is now active.'),
-        backgroundColor: Color(0xFF26A69A),
         duration: Duration(seconds: 3),
       ),
     );
@@ -90,19 +90,19 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: AppColors.surface,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: const Color(0xFFE2E8F0)),
+          child: Container(height: 1, color: AppColors.border),
         ),
         title: const Text(
           'Angel One API Setup',
           style: TextStyle(
-            color: Color(0xFF1E293B),
+            color: AppColors.activeText,
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
@@ -143,7 +143,7 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscurePin ? Icons.visibility_off : Icons.visibility,
-                    color: const Color(0xFF94A3B8),
+                    color: AppColors.inactiveText,
                     size: 20,
                   ),
                   onPressed: () => setState(() => _obscurePin = !_obscurePin),
@@ -160,11 +160,10 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscureTotp ? Icons.visibility_off : Icons.visibility,
-                    color: const Color(0xFF94A3B8),
+                    color: AppColors.inactiveText,
                     size: 20,
                   ),
-                  onPressed: () =>
-                      setState(() => _obscureTotp = !_obscureTotp),
+                  onPressed: () => setState(() => _obscureTotp = !_obscureTotp),
                 ),
                 validator: (v) =>
                     (v == null || v.trim().isEmpty) ? 'Required' : null,
@@ -174,7 +173,7 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
                 'Find in Angel One app → Profile → Security → TOTP → '
                 'Setup → copy the base32 secret (not the QR code).',
                 style: TextStyle(
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.inactiveText,
                   fontSize: 11.5,
                 ),
               ),
@@ -184,8 +183,6 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
                 height: 52,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFB300),
-                    foregroundColor: const Color(0xFF1E293B),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -198,7 +195,7 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Color(0xFF1E293B),
+                            color: Colors.white,
                           ),
                         )
                       : const Text(
@@ -214,7 +211,8 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
               const Center(
                 child: Text(
                   'Credentials are stored only on your device.',
-                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                  style:
+                      TextStyle(color: AppColors.inactiveText, fontSize: 11.5),
                 ),
               ),
             ],
@@ -235,21 +233,21 @@ class _InfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFB300).withOpacity(0.08),
+        color: AppColors.primaryBlue.withOpacity(0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFFFB300).withOpacity(0.35)),
+        border: Border.all(color: AppColors.primaryBlue.withOpacity(0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: const [
-              Icon(Icons.info_outline, size: 16, color: Color(0xFFFFB300)),
+              Icon(Icons.info_outline, size: 16, color: AppColors.primaryBlue),
               SizedBox(width: 6),
               Text(
                 'Where to get these values',
                 style: TextStyle(
-                  color: Color(0xFF1E293B),
+                  color: AppColors.activeText,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -260,8 +258,7 @@ class _InfoCard extends StatelessWidget {
           _Bullet('API Key → smartapi.angelone.in → My Apps → Create App'),
           _Bullet('Client ID → your Angel One login ID (e.g. A123456)'),
           _Bullet('PIN → your 4-6 digit Angel One trading PIN'),
-          _Bullet(
-              'TOTP Secret → Angel One app → Profile → Security → '
+          _Bullet('TOTP Secret → Angel One app → Profile → Security → '
               'Enable TOTP → copy base32 key'),
         ],
       ),
@@ -279,11 +276,12 @@ class _Bullet extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• ', style: TextStyle(color: Color(0xFF64748B))),
+          const Text('• ', style: TextStyle(color: AppColors.inactiveText)),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              style:
+                  const TextStyle(color: AppColors.inactiveText, fontSize: 12),
             ),
           ),
         ],
@@ -302,7 +300,7 @@ class _FieldLabel extends StatelessWidget {
       child: Text(
         label,
         style: const TextStyle(
-          color: Color(0xFF1E293B),
+          color: AppColors.activeText,
           fontSize: 13,
           fontWeight: FontWeight.w600,
         ),
@@ -340,12 +338,12 @@ class _Field extends StatelessWidget {
           caps ? TextCapitalization.characters : TextCapitalization.none,
       validator: validator,
       style: const TextStyle(
-        color: Color(0xFF1E293B),
+        color: AppColors.activeText,
         fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+        hintStyle: const TextStyle(color: AppColors.inactiveText, fontSize: 13),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: const Color(0xFFFFFFFF),
@@ -353,20 +351,20 @@ class _Field extends StatelessWidget {
             const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide:
-              const BorderSide(color: Color(0xFFFFB300), width: 1.5),
+              const BorderSide(color: AppColors.primaryBlue, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFEF5350)),
+          borderSide: const BorderSide(color: AppColors.danger),
         ),
       ),
     );

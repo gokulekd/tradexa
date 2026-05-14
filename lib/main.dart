@@ -3,22 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:tradexa/portfolio/portfolio.dart';
 import 'package:tradexa/splash/splash_screen.dart';
+import 'package:tradexa/theme/app_colors.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  runApp(const KiteInsightsApp());
+  runApp(const TradeXaApp());
 }
 
-class KiteInsightsApp extends StatelessWidget {
-  const KiteInsightsApp({super.key});
+class TradeXaApp extends StatelessWidget {
+  const TradeXaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => Portfolio(),
       child: MaterialApp(
-        title: 'Kite Insights',
+        title: 'Tradexe',
         debugShowCheckedModeBanner: false,
         theme: _buildTheme(),
         home: const SplashScreen(),
@@ -30,26 +31,40 @@ class KiteInsightsApp extends StatelessWidget {
     return ThemeData(
       brightness: Brightness.light,
       useMaterial3: true,
-      scaffoldBackgroundColor: const Color(0xFFF5F7FA),
+      scaffoldBackgroundColor: AppColors.background,
       colorScheme: const ColorScheme.light(
-        primary: Color(0xFFFFB300),
-        secondary: Color(0xFF26A69A),
-        surface: Color(0xFFFFFFFF),
+        primary: AppColors.primaryBlue,
+        secondary: AppColors.buttonGreen,
+        surface: AppColors.surface,
+        onPrimary: Colors.white,
+        onSecondary: Colors.white,
+        onSurface: AppColors.activeText,
       ),
-      cardColor: const Color(0xFFFFFFFF),
-      dividerColor: const Color(0xFFE2E8F0),
+      cardColor: AppColors.surface,
+      dividerColor: AppColors.border,
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFFFFFFFF),
-        foregroundColor: Color(0xFF1E293B),
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.activeText,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
       textTheme: const TextTheme().apply(
-        bodyColor: const Color(0xFF1E293B),
-        displayColor: const Color(0xFF1E293B),
+        bodyColor: AppColors.activeText,
+        displayColor: AppColors.activeText,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.buttonGreen,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.border,
+          disabledForegroundColor: AppColors.inactiveText,
+          elevation: 0,
+        ),
       ),
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.buttonGreen,
+        contentTextStyle: TextStyle(color: Colors.white),
       ),
     );
   }
