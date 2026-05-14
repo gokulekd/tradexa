@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -308,6 +309,15 @@ class _HomeScreenState extends State<HomeScreen> {
               size: 20, color: AppColors.inactiveText),
           tooltip: 'Refresh data',
           onPressed: _load,
+        ),
+        IconButton(
+          icon: const Icon(
+            Icons.logout_rounded,
+            size: 20,
+            color: AppColors.inactiveText,
+          ),
+          tooltip: 'Sign out',
+          onPressed: () => FirebaseAuth.instance.signOut(),
         ),
         IconButton(
           icon: const Icon(

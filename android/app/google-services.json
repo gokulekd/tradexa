@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1000913057108",
+    "project_id": "tradexe-9b85e",
+    "storage_bucket": "tradexe-9b85e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1000913057108:android:5608591ffc1a11f46dc4c1",
+        "android_client_info": {
+          "package_name": "com.example.tradexa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKfGr7iLhX2UnXjDqDHuft7xOo7YRlS5k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

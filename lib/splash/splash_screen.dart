@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tradexa/auth/login_screen.dart';
+import 'package:tradexa/auth/auth_flow_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -32,7 +32,7 @@ class _SplashScreenState extends State<SplashScreen>
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const LoginScreen(),
+          pageBuilder: (_, __, ___) => const AuthFlowScreen(),
           transitionsBuilder: (_, anim, __, child) =>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: const Duration(milliseconds: 500),
@@ -56,9 +56,9 @@ class _SplashScreenState extends State<SplashScreen>
           opacity: _fadeAnim,
           child: ScaleTransition(
             scale: _scaleAnim,
-            child: Column(
+            child: const Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Image(
                   image: AssetImage('assets/splash_screen/tradexe_logo.png'),
                   width: 240,

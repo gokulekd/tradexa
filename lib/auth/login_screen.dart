@@ -1,9 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:tradexa/home/home_screen.dart';
+import 'package:tradexa/auth/auth_service.dart';
 import 'package:tradexa/theme/app_colors.dart';
-
-// Change this to your preferred PIN.
-const String _kPin = '1234';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,68 +10,77 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with SingleTickerProviderStateMixin {
-  final List<String> _entered = [];
-  bool _hasError = false;
-  late final AnimationController _shakeCtrl;
-  late final Animation<double> _shakeAnim;
+class _LoginScreenState extends State<LoginScreen> {
+  final AuthService _authService = AuthService();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
-  static const int _pinLength = 4;
-
-  @override
-  void initState() {
-    super.initState();
-    _shakeCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
-    _shakeAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _shakeCtrl, curve: Curves.elasticIn),
-    );
-    _shakeCtrl.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _shakeCtrl.reset();
-        setState(() {
-          _entered.clear();
-          _hasError = false;
-        });
-      }
-    });
-  }
+  bool _isSubmitting = false;
+  String? _errorText;
 
   @override
   void dispose() {
-    _shakeCtrl.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  void _onDigit(String d) {
-    if (_entered.length >= _pinLength || _hasError) return;
-    setState(() => _entered.add(d));
-    if (_entered.length == _pinLength) {
-      _validate();
+  Future<void> _submit({required bool createAccount}) async {
+    final form = _formKey.currentState;
+    if (form == null || !form.validate()) return;
+
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      _isSubmitting = true;
+      _errorText = null;
+    });
+
+    try {
+      if (createAccount) {
+        await _authService.createAccountWithEmail(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+      } else {
+        await _authService.signInWithEmail(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+      }
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _errorText = _messageFor(error);
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _errorText = 'Something went wrong while signing in.';
+      });
     }
   }
 
-  void _onDelete() {
-    if (_entered.isEmpty || _hasError) return;
-    setState(() => _entered.removeLast());
-  }
-
-  void _validate() {
-    if (_entered.join() == _kPin) {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const HomeScreen(),
-          transitionsBuilder: (_, anim, __, child) =>
-              FadeTransition(opacity: anim, child: child),
-          transitionDuration: const Duration(milliseconds: 400),
-        ),
-      );
-    } else {
-      setState(() => _hasError = true);
-      _shakeCtrl.forward();
+  String _messageFor(FirebaseAuthException error) {
+    switch (error.code) {
+      case 'invalid-email':
+        return 'Please enter a valid email address.';
+      case 'invalid-credential':
+      case 'wrong-password':
+        return 'Email or password is incorrect.';
+      case 'email-already-in-use':
+        return 'This email is already registered. Use Sign In instead.';
+      case 'weak-password':
+        return 'Password must be at least 6 characters.';
+      case 'user-not-found':
+        return 'No account found for this email. Create one first.';
+      case 'network-request-failed':
+        return 'Network error. Check your connection and try again.';
+      default:
+        return error.message ?? 'Unable to sign in right now.';
     }
   }
 
@@ -84,19 +91,148 @@ class _LoginScreenState extends State<LoginScreen>
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 24),
-                  _buildHeader(),
-                  const SizedBox(height: 48),
-                  _buildPinDots(),
-                  const SizedBox(height: 40),
-                  _buildNumpad(),
-                  const SizedBox(height: 32),
-                ],
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 28),
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        decoration: _inputDecoration(
+                          label: 'Email',
+                          hint: 'you@example.com',
+                          icon: Icons.email_outlined,
+                        ),
+                        validator: (value) {
+                          final email = value?.trim() ?? '';
+                          if (email.isEmpty) return 'Email is required.';
+                          if (!email.contains('@')) {
+                            return 'Enter a valid email address.';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _submit(createAccount: false),
+                        decoration: _inputDecoration(
+                          label: 'Password',
+                          hint: 'At least 6 characters',
+                          icon: Icons.lock_outline_rounded,
+                        ),
+                        validator: (value) {
+                          final password = value?.trim() ?? '';
+                          if (password.isEmpty) return 'Password is required.';
+                          if (password.length < 6) {
+                            return 'Password must be at least 6 characters.';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Use Sign In for existing users, or Create Account for a new Firebase email user.',
+                        style: TextStyle(
+                          color: AppColors.inactiveText,
+                          fontSize: 12.5,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (_errorText != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Text(
+                            _errorText!,
+                            style: const TextStyle(
+                              color: AppColors.danger,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isSubmitting
+                              ? null
+                              : () => _submit(createAccount: false),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: _isSubmitting
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  'Sign In',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: _isSubmitting
+                              ? null
+                              : () => _submit(createAccount: true),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            side: const BorderSide(color: AppColors.border),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text(
+                            'Create Account',
+                            style: TextStyle(
+                              color: AppColors.activeText,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -107,162 +243,65 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildHeader() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 64,
-          height: 64,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
-            color: const Color(0xFFFFFFFF),
+            color: AppColors.primaryBlue.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.primaryBlue.withOpacity(0.35),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 3),
-              ),
-            ],
           ),
-          child: const Center(
-            child: Icon(
-              Icons.lock_outline_rounded,
-              color: AppColors.primaryBlue,
-              size: 28,
-            ),
+          child: const Icon(
+            Icons.shield_outlined,
+            color: AppColors.primaryBlue,
+            size: 28,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 18),
         const Text(
-          'Enter PIN',
+          'Sign in to Tradexa',
           style: TextStyle(
             color: AppColors.activeText,
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         const Text(
-          'Tradexe · Personal Access',
+          'Email authentication only for now. After sign-in, you’ll set a 4-digit access PIN.',
           style: TextStyle(
             color: AppColors.inactiveText,
-            fontSize: 13,
+            fontSize: 13.5,
+            height: 1.5,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildPinDots() {
-    return AnimatedBuilder(
-      animation: _shakeAnim,
-      builder: (_, child) {
-        final offset = _hasError
-            ? ((_shakeAnim.value * 12) * (_shakeCtrl.value < 0.5 ? 1 : -1))
-            : 0.0;
-        return Transform.translate(
-          offset: Offset(offset, 0),
-          child: child,
-        );
-      },
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(_pinLength, (i) {
-          final filled = i < _entered.length;
-          final dotColor = _hasError
-              ? AppColors.danger
-              : filled
-                  ? AppColors.primaryBlue
-                  : AppColors.border;
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 10),
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: _hasError ? AppColors.danger : AppColors.border,
-                width: 1.5,
-              ),
-            ),
-          );
-        }),
+  InputDecoration _inputDecoration({
+    required String label,
+    required String hint,
+    required IconData icon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      prefixIcon: Icon(icon, color: AppColors.inactiveText),
+      filled: true,
+      fillColor: AppColors.background,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
-    );
-  }
-
-  Widget _buildNumpad() {
-    final keys = [
-      ['1', '2', '3'],
-      ['4', '5', '6'],
-      ['7', '8', '9'],
-      ['', '0', 'del'],
-    ];
-
-    return Column(
-      children: keys.map((row) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: row.map((k) {
-              if (k.isEmpty) return const SizedBox(width: 84);
-              if (k == 'del') {
-                return _NumKey(
-                  child: const Icon(Icons.backspace_outlined,
-                      color: AppColors.inactiveText, size: 22),
-                  onTap: _onDelete,
-                );
-              }
-              return _NumKey(
-                child: Text(
-                  k,
-                  style: const TextStyle(
-                    color: AppColors.activeText,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                onTap: () => _onDigit(k),
-              );
-            }).toList(),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _NumKey extends StatelessWidget {
-  final Widget child;
-  final VoidCallback onTap;
-
-  const _NumKey({required this.child, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 76,
-        height: 76,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFFFFF),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Center(child: child),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.2),
       ),
     );
   }

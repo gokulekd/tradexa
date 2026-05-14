@@ -1,14 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:tradexa/firebase_options.dart';
 import 'package:tradexa/portfolio/portfolio.dart';
 import 'package:tradexa/splash/splash_screen.dart';
 import 'package:tradexa/theme/app_colors.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  runApp(const TradeXaApp());
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    runApp(const TradeXaApp());
+  } catch (error) {
+    runApp(
+      FirebaseBootstrapErrorApp(
+        error: error.toString(),
+      ),
+    );
+  }
 }
 
 class TradeXaApp extends StatelessWidget {
@@ -65,6 +79,59 @@ class TradeXaApp extends StatelessWidget {
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.buttonGreen,
         contentTextStyle: TextStyle(color: Colors.white),
+      ),
+    );
+  }
+}
+
+class FirebaseBootstrapErrorApp extends StatelessWidget {
+  const FirebaseBootstrapErrorApp({
+    super.key,
+    required this.error,
+  });
+
+  final String error;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 40,
+                  color: Colors.redAccent,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Firebase failed to initialize',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  error,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Colors.black87,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
