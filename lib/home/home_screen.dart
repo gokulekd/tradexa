@@ -331,7 +331,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDrawer() {
-    final user = FirebaseAuth.instance.currentUser;
     return Drawer(
       backgroundColor: Colors.black,
       child: SafeArea(
@@ -351,20 +350,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Image.asset(
                     'assets/splash_screen/tradexe_logo.png',
-                    height: 100,
+                    height: 200,
                     fit: BoxFit.contain,
                   ),
-                  if (user?.email != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      user!.email!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.inactiveText,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -994,7 +982,7 @@ class _DrawerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tileColor = color ?? AppColors.activeText;
+    final tileColor = color ?? Colors.white;
     return ListTile(
       leading: Icon(icon, color: tileColor, size: 20),
       title: Text(
