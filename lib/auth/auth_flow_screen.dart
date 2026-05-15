@@ -1,8 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tradexa/auth/auth_service.dart';
-import 'package:tradexa/auth/login_screen.dart';
+import 'package:tradexa/auth/pin_unlock_screen.dart';
 import 'package:tradexa/auth/pin_setup_screen.dart';
+import 'package:tradexa/auth/sign_in_screen.dart';
 import 'package:tradexa/home/home_screen.dart';
 import 'package:tradexa/theme/app_colors.dart';
 
@@ -15,6 +16,7 @@ class AuthFlowScreen extends StatefulWidget {
 
 class _AuthFlowScreenState extends State<AuthFlowScreen> {
   final AuthService _authService = AuthService();
+  String? _pinVerifiedUid;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +29,8 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
 
         final user = snapshot.data;
         if (user == null) {
-          return const LoginScreen();
+          _pinVerifiedUid = null;
+          return const SignInScreen();
         }
 
         return FutureBuilder<bool>(
@@ -38,10 +41,26 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
             }
 
             if (pinSnapshot.data == true) {
-              return const HomeScreen();
+              if (_pinVerifiedUid == user.uid) {
+                return const HomeScreen();
+              }
+
+              return PinUnlockScreen(
+                onVerified: () {
+                  setState(() {
+                    _pinVerifiedUid = user.uid;
+                  });
+                },
+              );
             }
 
-            return const PinSetupScreen();
+            if (_pinVerifiedUid == user.uid) {
+              _pinVerifiedUid = null;
+            }
+
+            return PinSetupScreen(
+              onPinSaved: () => setState(() => _pinVerifiedUid = user.uid),
+            );
           },
         );
       },

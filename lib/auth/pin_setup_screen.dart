@@ -3,7 +3,9 @@ import 'package:tradexa/auth/pin_confirm_screen.dart';
 import 'package:tradexa/auth/pin_entry_scaffold.dart';
 
 class PinSetupScreen extends StatefulWidget {
-  const PinSetupScreen({super.key});
+  const PinSetupScreen({super.key, required this.onPinSaved});
+
+  final VoidCallback onPinSaved;
 
   @override
   State<PinSetupScreen> createState() => _PinSetupScreenState();
@@ -21,7 +23,10 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
       final pin = _entered.join();
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => PinConfirmScreen(initialPin: pin),
+          builder: (_) => PinConfirmScreen(
+            initialPin: pin,
+            onPinSaved: widget.onPinSaved,
+          ),
         ),
       );
       setState(() {

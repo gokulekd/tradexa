@@ -29,4 +29,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/splash_screen/tradexe_logo.png
+    - assets/logo/Tradexa no background.png
  

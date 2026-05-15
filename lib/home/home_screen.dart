@@ -26,6 +26,8 @@ class _Stock {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+
   static const _symbol = 'RELIANCE';
 
   static const _fiiStocks = [
@@ -180,8 +182,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: AppColors.background,
       appBar: _buildAppBar(),
+      drawer: _buildDrawer(),
       body: _candles == null && _error == null
           ? _buildLoading()
           : _error != null
@@ -262,73 +266,173 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  AppBar _buildAppBar() {
-    return AppBar(
-      backgroundColor: AppColors.surface,
-      elevation: 0,
-      surfaceTintColor: Colors.transparent,
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: AppColors.border),
+  PreferredSizeWidget _buildAppBar() {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(71),
+      child: Container(
+        color: Colors.black,
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              SizedBox(
+                height: 70,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () => _scaffoldKey.currentState?.openDrawer(),
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 16),
+                        child: Image.asset(
+                          'assets/logo/Tradexa no background.png',
+                          height: 50,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.tune,
+                          size: 20, color: AppColors.inactiveText),
+                      tooltip: 'API Settings',
+                      onPressed: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => const ApiSettingsScreen()),
+                        );
+                        _load();
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.refresh,
+                          size: 20, color: AppColors.inactiveText),
+                      tooltip: 'Refresh data',
+                      onPressed: _load,
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.account_balance_wallet_outlined,
+                        size: 20,
+                        color: AppColors.inactiveText,
+                      ),
+                      tooltip: 'Reset demo balance',
+                      onPressed: () => context.read<Portfolio>().reset(),
+                    ),
+                  ],
+                ),
+              ),
+              Container(height: 1, color: Colors.white12),
+            ],
+          ),
+        ),
       ),
-      title: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.primaryBlue.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                  color: AppColors.primaryBlue.withOpacity(0.5), width: 0.8),
-            ),
-            child: const Text(
-              'TRADEXE',
-              style: TextStyle(
-                color: AppColors.primaryBlue,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.5,
+    );
+  }
+
+  Widget _buildDrawer() {
+    final user = FirebaseAuth.instance.currentUser;
+    return Drawer(
+      backgroundColor: Colors.black,
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Logo header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: Colors.white12),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/splash_screen/tradexe_logo.png',
+                    height: 100,
+                    fit: BoxFit.contain,
+                  ),
+                  if (user?.email != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      user!.email!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.inactiveText,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-          ),
-        ],
+
+            // Tiles
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  _DrawerTile(
+                    icon: Icons.person_outline,
+                    label: 'Profile',
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: navigate to Profile screen
+                    },
+                  ),
+                  _DrawerTile(
+                    icon: Icons.account_balance_wallet_outlined,
+                    label: 'Wallet',
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: navigate to Wallet screen
+                    },
+                  ),
+                  _DrawerTile(
+                    icon: Icons.info_outline,
+                    label: 'About App',
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: navigate to About screen
+                    },
+                  ),
+                  _DrawerTile(
+                    icon: Icons.description_outlined,
+                    label: 'Terms & Conditions',
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: open Terms & Conditions web view
+                    },
+                  ),
+                  _DrawerTile(
+                    icon: Icons.privacy_tip_outlined,
+                    label: 'Privacy Policy',
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: open Privacy Policy web view
+                    },
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Divider(color: Colors.white12, height: 24),
+                  ),
+                  _DrawerTile(
+                    icon: Icons.logout_rounded,
+                    label: 'Log Out',
+                    color: AppColors.danger,
+                    onTap: () {
+                      Navigator.pop(context);
+                      FirebaseAuth.instance.signOut();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.tune, size: 20, color: AppColors.inactiveText),
-          tooltip: 'API Settings',
-          onPressed: () async {
-            await Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ApiSettingsScreen()),
-            );
-            _load(); // Reload with potentially new credentials.
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.refresh,
-              size: 20, color: AppColors.inactiveText),
-          tooltip: 'Refresh data',
-          onPressed: _load,
-        ),
-        IconButton(
-          icon: const Icon(
-            Icons.logout_rounded,
-            size: 20,
-            color: AppColors.inactiveText,
-          ),
-          tooltip: 'Sign out',
-          onPressed: () => FirebaseAuth.instance.signOut(),
-        ),
-        IconButton(
-          icon: const Icon(
-            Icons.account_balance_wallet_outlined,
-            size: 20,
-            color: AppColors.inactiveText,
-          ),
-          tooltip: 'Reset demo balance',
-          onPressed: () => context.read<Portfolio>().reset(),
-        ),
-      ],
     );
   }
 
@@ -873,6 +977,37 @@ class _FlowItem extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _DrawerTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+  const _DrawerTile(
+      {required this.icon,
+      required this.label,
+      required this.onTap,
+      this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final tileColor = color ?? AppColors.activeText;
+    return ListTile(
+      leading: Icon(icon, color: tileColor, size: 20),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: tileColor,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      trailing: Icon(Icons.chevron_right, color: Colors.white24, size: 18),
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 2),
     );
   }
 }

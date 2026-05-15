@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tradexa/auth/auth_logo.dart';
 import 'package:tradexa/theme/app_colors.dart';
 
 class PinEntryScaffold extends StatelessWidget {
@@ -26,99 +27,90 @@ class PinEntryScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildHeader(),
-                  const SizedBox(height: 48),
-                  _buildPinDots(),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 20,
-                    child: Text(
-                      errorText ?? '',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: errorText == null
-                            ? Colors.transparent
-                            : AppColors.danger,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  const AuthLogo(),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 32,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: AppColors.border),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.18),
+                          blurRadius: 32,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: AppColors.activeText,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          subtitle,
+                          style: const TextStyle(
+                            color: AppColors.inactiveText,
+                            fontSize: 13,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 36),
+                        _buildPinDots(),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 20,
+                          child: Text(
+                            errorText ?? '',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: errorText == null
+                                  ? Colors.transparent
+                                  : AppColors.danger,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (isBusy)
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 16),
+                            child: CircularProgressIndicator(
+                              color: AppColors.primaryBlue,
+                            ),
+                          ),
+                        _buildNumpad(),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  if (isBusy)
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 24),
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryBlue,
-                      ),
-                    ),
-                  _buildNumpad(),
                 ],
               ),
             ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Column(
-      children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.primaryBlue.withValues(alpha: 0.35),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: const Center(
-            child: Icon(
-              Icons.lock_outline_rounded,
-              color: AppColors.primaryBlue,
-              size: 28,
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          title,
-          style: const TextStyle(
-            color: AppColors.activeText,
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          subtitle,
-          style: const TextStyle(
-            color: AppColors.inactiveText,
-            fontSize: 13,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
     );
   }
 
@@ -208,16 +200,9 @@ class _NumKey extends StatelessWidget {
           height: 76,
           margin: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFFF2F2F2),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border, width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: Center(child: child),
         ),

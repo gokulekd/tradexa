@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:tradexa/auth/auth_flow_screen.dart';
 import 'package:tradexa/auth/auth_service.dart';
 import 'package:tradexa/auth/pin_entry_scaffold.dart';
 
@@ -7,9 +6,11 @@ class PinConfirmScreen extends StatefulWidget {
   const PinConfirmScreen({
     super.key,
     required this.initialPin,
+    required this.onPinSaved,
   });
 
   final String initialPin;
+  final VoidCallback onPinSaved;
 
   @override
   State<PinConfirmScreen> createState() => _PinConfirmScreenState();
@@ -57,10 +58,8 @@ class _PinConfirmScreenState extends State<PinConfirmScreen> {
     try {
       await _authService.savePin(pin);
       if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const AuthFlowScreen()),
-        (route) => false,
-      );
+      widget.onPinSaved();
+      Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) return;
       setState(() {

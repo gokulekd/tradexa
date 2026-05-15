@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   AuthService({
@@ -13,6 +14,8 @@ class AuthService {
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
+
+  static const _pinKeyPrefix = 'pin_hash_';
 
   User? get currentUser => _auth.currentUser;
 
@@ -26,7 +29,7 @@ class AuthService {
       email: email,
       password: password,
     );
-    await _ensureUserDocument(credential.user);
+    _syncUserDocument(credential.user);
     return credential;
   }
 
@@ -38,7 +41,7 @@ class AuthService {
       email: email,
       password: password,
     );
-    await _ensureUserDocument(credential.user);
+    _syncUserDocument(credential.user);
     return credential;
   }
 
@@ -47,34 +50,42 @@ class AuthService {
   Future<bool> userHasPin() async {
     final user = currentUser;
     if (user == null) return false;
-
-    final snapshot = await _firestore.collection('users').doc(user.uid).get();
-    final data = snapshot.data();
-    final pinHash = data?['pinHash'];
-    return pinHash is String && pinHash.isNotEmpty;
+    final prefs = await SharedPreferences.getInstance();
+    final hash = prefs.getString('$_pinKeyPrefix${user.uid}');
+    return hash != null && hash.isNotEmpty;
   }
 
   Future<void> savePin(String pin) async {
     final user = currentUser;
-    if (user == null) {
-      throw StateError('No signed-in user available.');
-    }
-
-    await _firestore.collection('users').doc(user.uid).set({
-      'email': user.email,
-      'pinHash': _hashPin(pin),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    if (user == null) throw StateError('No signed-in user available.');
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('$_pinKeyPrefix${user.uid}', _hashPin(pin));
   }
 
-  Future<void> _ensureUserDocument(User? user) async {
-    if (user == null) return;
+  Future<bool> verifyPin(String pin) async {
+    final user = currentUser;
+    if (user == null) throw StateError('No signed-in user available.');
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString('$_pinKeyPrefix${user.uid}');
+    if (saved == null || saved.isEmpty) return false;
+    return saved == _hashPin(pin);
+  }
 
-    await _firestore.collection('users').doc(user.uid).set({
+  Future<void> clearPin() async {
+    final user = currentUser;
+    if (user == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('$_pinKeyPrefix${user.uid}');
+  }
+
+  // Best-effort: syncs basic user metadata to Firestore. Failures are ignored
+  // so they never block the auth flow.
+  void _syncUserDocument(User? user) {
+    if (user == null) return;
+    _firestore.collection('users').doc(user.uid).set({
       'email': user.email,
-      'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    }, SetOptions(merge: true)).catchError((_) {});
   }
 
   String _hashPin(String pin) {
