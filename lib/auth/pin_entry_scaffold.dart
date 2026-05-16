@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:tradexa/auth/auth_logo.dart';
-import 'package:tradexa/theme/app_colors.dart';
 
 class PinEntryScaffold extends StatelessWidget {
   const PinEntryScaffold({
@@ -24,91 +23,74 @@ class PinEntryScaffold extends StatelessWidget {
 
   static const int _pinLength = 4;
 
+  static const _bgColor = Color(0xFF000000);
+  static const _keyColor = Color(0xFF2C2C2C);
+  static const _keyBorderColor = Color(0xFF3A3A3A);
+  static const _dotEmpty = Color(0x66FFFFFF);
+  static const _dotFilled = Color(0xFFFFFFFF);
+
+  static const _keyLabels = {
+    '2': 'ABC',
+    '3': 'DEF',
+    '4': 'GHI',
+    '5': 'JKL',
+    '6': 'MNO',
+    '7': 'PQRS',
+    '8': 'TUV',
+    '9': 'WXYZ',
+  };
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: _bgColor,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const AuthLogo(),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 32,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.18),
-                          blurRadius: 32,
-                          offset: const Offset(0, 12),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            color: AppColors.activeText,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          subtitle,
-                          style: const TextStyle(
-                            color: AppColors.inactiveText,
-                            fontSize: 13,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 36),
-                        _buildPinDots(),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 20,
-                          child: Text(
-                            errorText ?? '',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: errorText == null
-                                  ? Colors.transparent
-                                  : AppColors.danger,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        if (isBusy)
-                          const Padding(
-                            padding: EdgeInsets.only(bottom: 16),
-                            child: CircularProgressIndicator(
-                              color: AppColors.primaryBlue,
-                            ),
-                          ),
-                        _buildNumpad(),
-                      ],
-                    ),
-                  ),
-                ],
+        child: Column(
+          children: [
+            const SizedBox(height: 32),
+            const AuthLogo(width: 130),
+            const Spacer(),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
               ),
             ),
-          ),
+            const SizedBox(height: 24),
+            _buildPinDots(),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 20,
+              child: Text(
+                errorText ?? '',
+                style: TextStyle(
+                  color: errorText == null
+                      ? Colors.transparent
+                      : const Color(0xFFFF453A),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            if (isBusy)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                ),
+              ),
+            const Spacer(),
+            _buildNumpad(),
+            const SizedBox(height: 40),
+          ],
         ),
       ),
     );
@@ -120,13 +102,16 @@ class PinEntryScaffold extends StatelessWidget {
       children: List.generate(_pinLength, (index) {
         final filled = index < enteredDigits;
         return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 10),
-          width: 18,
-          height: 18,
+          margin: const EdgeInsets.symmetric(horizontal: 12),
+          width: 16,
+          height: 16,
           decoration: BoxDecoration(
-            color: filled ? AppColors.primaryBlue : AppColors.border,
+            color: filled ? _dotFilled : Colors.transparent,
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.border, width: 1.5),
+            border: Border.all(
+              color: filled ? _dotFilled : _dotEmpty,
+              width: 1.5,
+            ),
           ),
         );
       }),
@@ -134,7 +119,7 @@ class PinEntryScaffold extends StatelessWidget {
   }
 
   Widget _buildNumpad() {
-    final keys = [
+    final rows = [
       ['1', '2', '3'],
       ['4', '5', '6'],
       ['7', '8', '9'],
@@ -142,34 +127,54 @@ class PinEntryScaffold extends StatelessWidget {
     ];
 
     return Column(
-      children: keys.map((row) {
+      mainAxisSize: MainAxisSize.min,
+      children: rows.map((row) {
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: row.map((key) {
-              if (key.isEmpty) return const SizedBox(width: 84);
+              if (key.isEmpty) return const SizedBox(width: 80);
 
               if (key == 'del') {
-                return _NumKey(
+                return _KeyButton(
                   onTap: isBusy ? null : onDelete,
+                  transparent: true,
                   child: const Icon(
                     Icons.backspace_outlined,
-                    color: AppColors.inactiveText,
-                    size: 22,
+                    color: Colors.white,
+                    size: 24,
                   ),
                 );
               }
 
-              return _NumKey(
+              return _KeyButton(
                 onTap: isBusy ? null : () => onDigit(key),
-                child: Text(
-                  key,
-                  style: const TextStyle(
-                    color: AppColors.activeText,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      key,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w400,
+                        height: 1.1,
+                      ),
+                    ),
+                    if (_keyLabels.containsKey(key))
+                      Text(
+                        _keyLabels[key]!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.2,
+                        ),
+                      )
+                    else
+                      const SizedBox(height: 11),
+                  ],
                 ),
               );
             }).toList(),
@@ -180,32 +185,53 @@ class PinEntryScaffold extends StatelessWidget {
   }
 }
 
-class _NumKey extends StatelessWidget {
-  const _NumKey({
+class _KeyButton extends StatefulWidget {
+  const _KeyButton({
     required this.child,
     required this.onTap,
+    this.transparent = false,
   });
 
   final Widget child;
   final VoidCallback? onTap;
+  final bool transparent;
+
+  @override
+  State<_KeyButton> createState() => _KeyButtonState();
+}
+
+class _KeyButtonState extends State<_KeyButton> {
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      child: Opacity(
-        opacity: onTap == null ? 0.45 : 1,
-        child: Container(
-          width: 76,
-          height: 76,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF2F2F2),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border, width: 1),
-          ),
-          child: Center(child: child),
+      onTapDown: widget.onTap == null ? null : (_) => setState(() => _pressed = true),
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        widget.onTap?.call();
+      },
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 80),
+        width: 80,
+        height: 80,
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: widget.transparent
+              ? Colors.transparent
+              : _pressed
+                  ? const Color(0xFF4A4A4A)
+                  : PinEntryScaffold._keyColor,
+          shape: BoxShape.circle,
+          border: widget.transparent
+              ? null
+              : Border.all(
+                  color: PinEntryScaffold._keyBorderColor,
+                  width: 0.5,
+                ),
         ),
+        child: Center(child: widget.child),
       ),
     );
   }

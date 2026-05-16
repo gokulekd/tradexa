@@ -4,7 +4,7 @@ import 'package:tradexa/auth/auth_service.dart';
 import 'package:tradexa/auth/pin_unlock_screen.dart';
 import 'package:tradexa/auth/pin_setup_screen.dart';
 import 'package:tradexa/auth/sign_in_screen.dart';
-import 'package:tradexa/home/home_screen.dart';
+import 'package:tradexa/navigation/app_shell.dart';
 import 'package:tradexa/theme/app_colors.dart';
 
 class AuthFlowScreen extends StatefulWidget {
@@ -42,7 +42,7 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
 
             if (pinSnapshot.data == true) {
               if (_pinVerifiedUid == user.uid) {
-                return const HomeScreen();
+                return const AppShell();
               }
 
               return PinUnlockScreen(
