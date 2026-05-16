@@ -3,13 +3,13 @@ import 'package:tradexa/chart%20screen/chart_screen.dart';
 import 'package:tradexa/data/live_data.dart';
 import 'package:tradexa/detector/detector.dart';
 import 'package:tradexa/home/models/stock.dart';
-import 'package:tradexa/home/widgets/data_banner.dart';
 import 'package:tradexa/home/widgets/fii_stocks_card.dart';
+import 'package:tradexa/home/widgets/home_hero_card.dart';
+import 'package:tradexa/home/widgets/trending_strategies_card.dart';
 import 'package:tradexa/home/widgets/flow_card.dart';
 import 'package:tradexa/home/widgets/home_app_bar.dart';
 import 'package:tradexa/home/widgets/home_drawer.dart';
 import 'package:tradexa/home/widgets/opportunities_card.dart';
-import 'package:tradexa/home/widgets/portfolio_card.dart';
 import 'package:tradexa/home/widgets/regime_card.dart';
 import 'package:tradexa/model/candle.dart';
 import 'package:tradexa/theme/app_colors.dart';
@@ -184,29 +184,43 @@ class _HomeScreenState extends State<HomeScreen> {
       color: AppColors.primaryBlue,
       onRefresh: _load,
       child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: EdgeInsets.zero,
         children: [
-          DataBanner(isLive: _isLive),
+          HomeHeroCard(isLive: _isLive, lastClose: _lastClose),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 14, 16, 0),
+            child: TrendingStrategiesCard(),
+          ),
           const SizedBox(height: 14),
-          PortfolioCard(lastClose: _lastClose),
-          const SizedBox(height: 14),
-          RegimeCard(
-            latestFlow: _latestFlow,
-            lastClose: _lastClose,
-            symbol: _primarySymbol,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            child: RegimeCard(
+              latestFlow: _latestFlow,
+              lastClose: _lastClose,
+              symbol: _primarySymbol,
+            ),
           ),
           const SizedBox(height: 14),
           if (_latestFlow != null) ...[
-            FlowCard(latestFlow: _latestFlow!, isLive: _isLive),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: FlowCard(latestFlow: _latestFlow!, isLive: _isLive),
+            ),
             const SizedBox(height: 14),
           ],
-          OpportunitiesCard(opportunities: _opportunities ?? []),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: OpportunitiesCard(opportunities: _opportunities ?? []),
+          ),
           const SizedBox(height: 14),
-          FiiStocksCard(
-            stocks: Stock.fiiUniverse,
-            loadingSymbol: _loadingSymbol,
-            candlesLoaded: _candles != null,
-            onStockTap: _openChartFor,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: FiiStocksCard(
+              stocks: Stock.fiiUniverse,
+              loadingSymbol: _loadingSymbol,
+              candlesLoaded: _candles != null,
+              onStockTap: _openChartFor,
+            ),
           ),
           const SizedBox(height: 24),
         ],

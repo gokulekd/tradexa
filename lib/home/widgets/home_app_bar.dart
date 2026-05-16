@@ -35,7 +35,6 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ],
               ),
             ),
-            Container(height: 1, color: Colors.white12),
           ],
         ),
       ),
